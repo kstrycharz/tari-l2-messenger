@@ -53,8 +53,8 @@ const WASM_PATH: &str = "../messaging_template/target/wasm32-unknown-unknown/rel
 /// Deploy the messaging_template once, paste the addresses here, and recompile.
 /// These are permanent — the same contract will always serve the public test chat.
 /// Leave empty to degrade gracefully (public rooms visible but posting requires own component).
-const PUBLIC_COMPONENT_ADDRESS: &str = "";
-const PUBLIC_TEMPLATE_ADDRESS: &str = "";
+const PUBLIC_COMPONENT_ADDRESS: &str = "component_940c5f7543fa545777299b4ea14406f14020b5cc9dc9d978cf24dca0eaa8a880";
+const PUBLIC_TEMPLATE_ADDRESS: &str  = "template_ba8e472e8d37fc778a9a59cc915a381c80213977c6d66a19d3fd90e9dc500f41";
 
 /// Room IDs that are served by PUBLIC_COMPONENT_ADDRESS.
 /// Must match the room_ids returned by /api/public-config.
