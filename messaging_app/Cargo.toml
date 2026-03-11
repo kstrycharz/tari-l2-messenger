@@ -1,0 +1,29 @@
+[package]
+name = "messaging-app"
+version = "0.1.0"
+edition = "2024"
+
+[[bin]]
+name = "messaging-app"
+path = "src/main.rs"
+
+[dependencies]
+ootle-rs = "0.1"
+tari_ootle_transaction = "0.25"
+tari_ootle_common_types = "0.25"
+tari_template_lib_types = "0.20"
+tari_crypto = "0.22"
+tari_utilities = "0.8"
+sha2 = "0.10"
+
+axum = { version = "0.7", features = ["macros"] }
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "time"] }
+reqwest = { version = "0.12", features = ["json"] }
+tower-http = { version = "0.5", features = ["fs", "cors"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+anyhow = "1.0"
+bip39 = "2"
+aes-gcm = "0.10"
+hkdf = "0.12"
+rand = "0.8"

@@ -1,0 +1,22 @@
+[package]
+name = "messaging_template"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+tari_template_lib = "0.20"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dev-dependencies]
+tari_template_test_tooling = "0.25"
+tari_ootle_transaction = "0.25"
+tari_crypto = "0.22"
+
+[profile.release]
+opt-level = 's'
+lto = true
+codegen-units = 1
+panic = 'abort'
+strip = true

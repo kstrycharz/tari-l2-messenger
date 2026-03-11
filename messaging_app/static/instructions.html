@@ -1,0 +1,1277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tari Messenger — Full Guide</title>
+  <style>
+    :root {
+      --bg: #0d1117;
+      --surface: #161b22;
+      --surface2: #21262d;
+      --border: #30363d;
+      --tari: #9b59b6;
+      --tari-light: #c39bd3;
+      --tari-glow: rgba(155, 89, 182, 0.15);
+      --green: #3fb950;
+      --blue: #58a6ff;
+      --orange: #e3b341;
+      --red: #f85149;
+      --text: #e6edf3;
+      --text-muted: #8b949e;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      line-height: 1.7;
+      font-size: 16px;
+    }
+
+    /* ── Header ── */
+    header {
+      background: linear-gradient(135deg, #0d1117 0%, #1a0a2e 50%, #0d1117 100%);
+      border-bottom: 1px solid var(--border);
+      padding: 60px 24px 48px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    header::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 600px;
+      height: 300px;
+      background: radial-gradient(ellipse, rgba(155,89,182,0.2) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .logo { font-size: 48px; margin-bottom: 12px; }
+    header h1 {
+      font-size: 2.4rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--tari-light), var(--blue));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 10px;
+    }
+    header p { color: var(--text-muted); font-size: 1.05rem; max-width: 560px; margin: 0 auto 24px; }
+    .back-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 8px 18px;
+      border-radius: 8px;
+      text-decoration: none;
+      font-size: 0.9rem;
+      transition: all 0.2s;
+    }
+    .back-btn:hover { background: var(--tari); border-color: var(--tari); }
+
+    /* ── Nav ── */
+    nav {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 0 24px;
+      display: flex;
+      gap: 0;
+      overflow-x: auto;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    nav a {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 0.85rem;
+      padding: 14px 16px;
+      border-bottom: 2px solid transparent;
+      white-space: nowrap;
+      transition: all 0.15s;
+    }
+    nav a:hover { color: var(--text); border-bottom-color: var(--tari-light); }
+
+    /* ── Main ── */
+    main { max-width: 860px; margin: 0 auto; padding: 48px 24px 80px; }
+
+    /* ── Sections ── */
+    .section { margin-bottom: 56px; }
+    .section-header { display: flex; align-items: center; gap: 14px; margin-bottom: 24px; }
+    .section-icon {
+      font-size: 28px;
+      width: 52px;
+      height: 52px;
+      background: var(--tari-glow);
+      border: 1px solid rgba(155,89,182,0.4);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .section h2 { font-size: 1.5rem; font-weight: 600; color: var(--text); }
+    .section h2 span { display: block; font-size: 0.85rem; font-weight: 400; color: var(--text-muted); margin-top: 2px; }
+
+    p { color: var(--text-muted); margin-bottom: 16px; }
+    p strong { color: var(--text); }
+    p:last-child { margin-bottom: 0; }
+
+    /* ── Cards ── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px 24px;
+      margin-bottom: 16px;
+    }
+    .card h3 { font-size: 1rem; font-weight: 600; color: var(--text); margin-bottom: 8px; }
+    .card p { margin: 0; font-size: 0.9rem; }
+
+    /* ── Step list ── */
+    .steps { list-style: none; counter-reset: steps; }
+    .steps li {
+      counter-increment: steps;
+      display: flex;
+      gap: 16px;
+      padding: 20px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .steps li:last-child { border-bottom: none; }
+    .step-num {
+      width: 32px;
+      height: 32px;
+      background: var(--tari);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.85rem;
+      font-weight: 700;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+    .step-body h4 { font-size: 1rem; font-weight: 600; color: var(--text); margin-bottom: 6px; }
+    .step-body p { margin: 0; font-size: 0.9rem; }
+
+    /* ── Fee table ── */
+    .fee-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+    .fee-table th {
+      background: var(--surface2);
+      color: var(--text-muted);
+      font-weight: 500;
+      text-align: left;
+      padding: 10px 16px;
+      border-bottom: 1px solid var(--border);
+    }
+    .fee-table td { padding: 12px 16px; border-bottom: 1px solid var(--border); color: var(--text-muted); }
+    .fee-table tr:last-child td { border-bottom: none; }
+    .fee-table td:first-child { color: var(--text); font-weight: 500; }
+    .fee-amount { color: var(--orange); font-family: monospace; }
+
+    /* ── Concept grid ── */
+    .concept-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
+    .concept-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      transition: border-color 0.2s;
+    }
+    .concept-card:hover { border-color: var(--tari); }
+    .concept-card .icon { font-size: 28px; margin-bottom: 10px; }
+    .concept-card h3 { font-size: 0.95rem; font-weight: 600; color: var(--text); margin-bottom: 8px; }
+    .concept-card p { font-size: 0.85rem; margin: 0; }
+
+    /* ── Highlight box ── */
+    .highlight {
+      background: var(--tari-glow);
+      border: 1px solid rgba(155,89,182,0.4);
+      border-radius: 10px;
+      padding: 16px 20px;
+      margin: 20px 0;
+    }
+    .highlight p { color: var(--tari-light); margin: 0; font-size: 0.92rem; }
+
+    .warn-box {
+      background: rgba(227,179,65,0.08);
+      border: 1px solid rgba(227,179,65,0.35);
+      border-radius: 10px;
+      padding: 16px 20px;
+      margin: 20px 0;
+    }
+    .warn-box p { color: var(--orange); margin: 0; font-size: 0.92rem; }
+
+    /* ── Code ── */
+    code {
+      font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 1px 6px;
+      font-size: 0.85em;
+      color: var(--blue);
+    }
+    .code-block {
+      background: #010409;
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--tari);
+      border-radius: 6px;
+      padding: 14px 18px;
+      font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+      font-size: 0.8rem;
+      color: var(--blue);
+      white-space: pre;
+      overflow-x: auto;
+      margin: 14px 0;
+      line-height: 1.7;
+    }
+
+    /* ── Flow diagram ── */
+    .flow { display: flex; flex-direction: column; align-items: stretch; margin: 24px 0; gap: 0; }
+    .flow-step {
+      display: flex;
+      gap: 20px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+    }
+    .flow-step:hover { border-color: rgba(155,89,182,0.4); }
+    .flow-num {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--tari), #7d3c98);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 0.9rem;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+    .flow-body { flex: 1; min-width: 0; }
+    .flow-title {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .flow-tag {
+      font-size: 0.75rem;
+      font-weight: 500;
+      background: var(--tari-glow);
+      border: 1px solid rgba(155,89,182,0.35);
+      color: var(--tari-light);
+      padding: 2px 9px;
+      border-radius: 20px;
+    }
+    .enc-tag {
+      font-size: 0.75rem;
+      font-weight: 500;
+      background: rgba(63,185,80,0.1);
+      border: 1px solid rgba(63,185,80,0.3);
+      color: var(--green);
+      padding: 2px 9px;
+      border-radius: 20px;
+    }
+    .flow-body p { font-size: 0.88rem; margin-bottom: 10px; }
+    .flow-body p:last-child { margin-bottom: 0; }
+    .flow-note {
+      background: rgba(88,166,255,0.07);
+      border: 1px solid rgba(88,166,255,0.2);
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 0.85rem;
+      color: #79b8ff;
+      margin-top: 10px;
+    }
+    .flow-arrow { text-align: center; color: rgba(155,89,182,0.5); font-size: 1.4rem; line-height: 1; padding: 6px 0; }
+
+    /* ── Enc diagram ── */
+    .enc-diagram {
+      background: var(--surface);
+      border: 1px solid rgba(63,185,80,0.3);
+      border-radius: 12px;
+      padding: 20px 24px;
+      margin: 20px 0;
+    }
+    .enc-diagram h3 { font-size: 0.95rem; font-weight: 600; color: var(--green); margin-bottom: 14px; }
+    .enc-step { display: flex; gap: 14px; align-items: flex-start; margin-bottom: 12px; }
+    .enc-step:last-child { margin-bottom: 0; }
+    .enc-num {
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      background: rgba(63,185,80,0.2);
+      border: 1px solid rgba(63,185,80,0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--green);
+      flex-shrink: 0;
+    }
+    .enc-body { font-size: 0.88rem; color: var(--text-muted); }
+    .enc-body strong { color: var(--text); }
+
+    /* ── Debug info ── */
+    .debug-info { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+    .debug-row { display: flex; align-items: flex-start; padding: 14px 20px; border-bottom: 1px solid var(--border); gap: 16px; }
+    .debug-row:last-child { border-bottom: none; }
+    .debug-label { width: 200px; flex-shrink: 0; font-size: 0.85rem; font-weight: 600; color: var(--text); }
+    .debug-val { font-size: 0.85rem; color: var(--text-muted); }
+
+    /* ── Identity box ── */
+    .identity-box {
+      background: linear-gradient(135deg, rgba(155,89,182,0.08), rgba(88,166,255,0.05));
+      border: 1px solid rgba(155,89,182,0.3);
+      border-radius: 12px;
+      padding: 24px;
+      margin-top: 24px;
+    }
+    .identity-box h3 { font-size: 1.05rem; font-weight: 600; color: var(--text); margin-bottom: 12px; }
+    .identity-box p { font-size: 0.88rem; margin-bottom: 12px; }
+    .identity-box p:last-child { margin-bottom: 0; }
+
+    /* ── Badges ── */
+    .badge { display: inline-block; padding: 2px 10px; border-radius: 20px; font-size: 0.78rem; font-weight: 600; }
+    .badge-green { background: rgba(63,185,80,0.15); color: var(--green); border: 1px solid rgba(63,185,80,0.3); }
+    .badge-blue { background: rgba(88,166,255,0.12); color: var(--blue); border: 1px solid rgba(88,166,255,0.3); }
+    .badge-orange { background: rgba(227,179,65,0.12); color: var(--orange); border: 1px solid rgba(227,179,65,0.3); }
+    .badge-red { background: rgba(248,81,73,0.12); color: var(--red); border: 1px solid rgba(248,81,73,0.3); }
+
+    /* ── Footer ── */
+    footer {
+      text-align: center;
+      padding: 32px 24px;
+      border-top: 1px solid var(--border);
+      color: var(--text-muted);
+      font-size: 0.85rem;
+    }
+    footer a { color: var(--tari-light); text-decoration: none; }
+    footer a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">🔮</div>
+  <h1>Tari Messenger</h1>
+  <p>Complete guide — blockchain messaging, wallet management, E2EE encryption, and architecture</p>
+  <a href="/" class="back-btn">← Back to App</a>
+</header>
+
+<nav>
+  <a href="#what">What is this?</a>
+  <a href="#quickstart">Quick Start</a>
+  <a href="#wallets">Wallets</a>
+  <a href="#messaging">Messaging</a>
+  <a href="#encryption">🔒 Encryption</a>
+  <a href="#flow">Message Flow</a>
+  <a href="#fees">Fees</a>
+  <a href="#concepts">Concepts</a>
+  <a href="#templates">📜 Templates</a>
+  <a href="#architecture">Architecture</a>
+  <a href="#troubleshooting">Troubleshooting</a>
+</nav>
+
+<main>
+
+  <!-- ── What is this? ── -->
+  <div class="section" id="what">
+    <div class="section-header">
+      <div class="section-icon">🌐</div>
+      <h2>What is Tari Messenger?
+        <span>A proof-of-concept blockchain messaging app</span>
+      </h2>
+    </div>
+    <p>
+      Tari Messenger is a <strong>WhatsApp-style chat application</strong> where every message is a real
+      blockchain transaction. There is no central server storing your messages — they live on the
+      <strong>Tari Ootle Layer 2 network</strong>, an experimental testnet built on Rust and WASM smart contracts.
+    </p>
+    <p>
+      You can create multiple wallets, send direct messages (DMs) to any public key, create group chat rooms,
+      back up and restore keys, and (experimentally) enable <strong>end-to-end encryption</strong> for DMs
+      using Ristretto ECDH + AES-256-GCM.
+    </p>
+    <div class="highlight">
+      <p>💡 <strong>No real money involved.</strong> This runs on the Esmeralda testnet. All tokens (tTARI) are
+      free test tokens from a faucet — zero real-world value. Great for learning how blockchain works in practice.</p>
+    </div>
+    <div class="concept-grid" style="margin-top:20px">
+      <div class="concept-card">
+        <div class="icon">🔑</div>
+        <h3>Your Identity = Your Key</h3>
+        <p>No username, no account — just a cryptographic key pair. Your 64-char public key is your address on the network.</p>
+      </div>
+      <div class="concept-card">
+        <div class="icon">⛓</div>
+        <h3>Every Message = A Transaction</h3>
+        <p>Sending a message costs ~2,000 µTARI in fees and takes 10–60 seconds to confirm on-chain.</p>
+      </div>
+      <div class="concept-card">
+        <div class="icon">🔒</div>
+        <h3>Optional E2EE Encryption</h3>
+        <p>Enable end-to-end encryption in the wallet panel. DMs are encrypted before hitting the blockchain (experimental).</p>
+      </div>
+      <div class="concept-card">
+        <div class="icon">📱</div>
+        <h3>Multi-Wallet</h3>
+        <p>Add as many wallets as you want. Switch between them in the top-left dropdown. Each has its own key and balance.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Quick Start ── -->
+  <div class="section" id="quickstart">
+    <div class="section-header">
+      <div class="section-icon">🚀</div>
+      <h2>Quick Start
+        <span>Get chatting in 4 steps</span>
+      </h2>
+    </div>
+
+    <ol class="steps">
+      <li>
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <h4>Launch the app</h4>
+          <p>Run <code>launch.bat</code> (or <code>cd messaging_app &amp;&amp; cargo run --release</code>).
+          Open <strong>http://localhost:3000</strong> in your browser.</p>
+        </div>
+      </li>
+      <li>
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <h4>Add a wallet</h4>
+          <p>Click the wallet name at top-left → <strong>Add Wallet</strong> → <strong>✨ Generate</strong>.
+          Enter a display name and click <em>Generate &amp; Fund</em>. The app creates a fresh random key pair and
+          requests 10 tTARI from the faucet. Wait ~30–60 seconds.</p>
+        </div>
+      </li>
+      <li>
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <h4>Configure the messaging component</h4>
+          <p>Click the yellow banner → <strong>Auto-Publish WASM</strong>. This uploads the smart contract
+          (~100 KB) to the Tari network and deploys a messaging component. Takes ~60 seconds.</p>
+        </div>
+      </li>
+      <li>
+        <div class="step-num">4</div>
+        <div class="step-body">
+          <h4>Start chatting</h4>
+          <p>Click <strong>✉ New DM</strong> and paste a recipient's public key. Or add a second wallet and
+          copy its public key from the wallet info panel to start a DM with yourself across wallets.
+          Hit <kbd>Enter</kbd> or ➤ to send.</p>
+        </div>
+      </li>
+    </ol>
+
+    <div class="card" style="margin-top:20px">
+      <h3>🧪 Demo Mode</h3>
+      <p>Click <strong>🧪 Try Demo (Ootle &amp; Minotari)</strong> on the welcome screen. This creates two
+      wallets automatically, funds them, deploys the component, and opens a DM between them — a complete
+      two-wallet setup with zero configuration.</p>
+    </div>
+  </div>
+
+  <!-- ── Wallets ── -->
+  <div class="section" id="wallets">
+    <div class="section-header">
+      <div class="section-icon">🔑</div>
+      <h2>Wallet Management
+        <span>Creating, importing, backing up, and switching wallets</span>
+      </h2>
+    </div>
+
+    <p>
+      A "wallet" is a <strong>Ristretto elliptic-curve key pair</strong> — an account secret key and a view key,
+      both 32 bytes (64 hex chars). The public key derived from the account secret key is your on-chain identity.
+    </p>
+
+    <div class="card">
+      <h3>✨ Generate New Wallet</h3>
+      <p>Creates a random key pair and immediately requests 10 tTARI from the Esmeralda faucet. Fastest way to start.
+      The keys are saved to <code>messaging-state.json</code>.</p>
+    </div>
+
+    <div class="card">
+      <h3>🔑 Import by Keys (hex)</h3>
+      <p>Paste your existing 64-char hex account secret key and view secret key. Use this to import a wallet
+      you backed up previously. Your wallet must already have tTARI — use <em>💧 Faucet</em> in the HUD if needed.</p>
+    </div>
+
+    <div class="card">
+      <h3>📝 Import by Passphrase</h3>
+      <p>Derives keys from a passphrase using SHA-256. The same passphrase always produces the same wallet.
+      <strong>Not compatible with walletd/daemon seed words</strong> — uses a different derivation scheme.
+      Good for deterministic test wallets.</p>
+    </div>
+
+    <div class="card">
+      <h3>🌱 Import by Seed Words (BIP-39)</h3>
+      <p>Paste the 24 BIP-39 seed words from the <em>🔑 Backup</em> screen. The account and view keys each
+      have separate seed word sets. This is the recommended backup/restore format.</p>
+    </div>
+
+    <div class="card">
+      <h3>🔑 Backup Your Keys</h3>
+      <p>Click <em>🔑 Backup</em> in the wallet info panel to see your public key, account address, raw hex
+      private keys, and BIP-39 seed words. <strong>Store these somewhere safe</strong> — losing them means losing
+      your wallet. Anyone with your private keys has full control of your funds.</p>
+    </div>
+
+    <div class="card">
+      <h3>Switching Wallets</h3>
+      <p>Click the wallet name top-left to open the dropdown. Click any wallet to switch. Each wallet has its
+      own inbox, DM history, and balance. Switching wallets reloads the conversation list for that wallet.</p>
+    </div>
+
+    <div class="card">
+      <h3>💧 Faucet</h3>
+      <p>Click <em>💧 Faucet</em> in the wallet HUD to request more free tTARI from the testnet faucet.
+      Useful if your balance runs low after many messages. Takes ~30 seconds to confirm.</p>
+    </div>
+  </div>
+
+  <!-- ── Messaging ── -->
+  <div class="section" id="messaging">
+    <div class="section-header">
+      <div class="section-icon">✉️</div>
+      <h2>Messaging
+        <span>Direct messages and group rooms</span>
+      </h2>
+    </div>
+
+    <div class="card">
+      <h3>Direct Messages (DMs)</h3>
+      <p>Click <strong>✉ New DM</strong>, paste the recipient's 64-char Ristretto public key, and optionally
+      give them a nickname. They can find their public key in the wallet info panel (PK field). Once open,
+      you can type messages and press Enter. Messages are stored on-chain with the sender's public key
+      (set by the blockchain — cannot be faked) and the recipient's public key (you provide).</p>
+    </div>
+
+    <div class="card">
+      <h3>Group Rooms</h3>
+      <p>Click <strong>👥 New Group</strong>, enter a unique Room ID (e.g. <code>general</code>), and a
+      display name. The room is created on-chain. Share the Room ID with others so they can join via
+      <strong>🔗 Join Room</strong>. Anyone who knows the Room ID can post — no invite needed.
+      All room messages are always public (no encryption in group rooms).</p>
+    </div>
+
+    <div class="card">
+      <h3>Why do messages show up instantly?</h3>
+      <p>The UI adds your message to the local cache immediately for a snappy feel. The blockchain transaction
+      runs in the background (~10–60 seconds). When it confirms, the Debug Panel shows a
+      <span class="badge badge-green">Committed</span> entry. Messages from the chain are synced automatically
+      every ~10 seconds via the Esmeralda indexer.</p>
+    </div>
+
+    <div class="card">
+      <h3>Contact Names</h3>
+      <p>Click <strong>✏️ Set Name</strong> in the chat header to give a contact a nickname. Names are stored
+      locally in your state file — they're not on the blockchain. Use them to remember who's who.</p>
+    </div>
+
+    <div class="card">
+      <h3>Sync Button</h3>
+      <p>The app polls the chain every 10 seconds automatically. If you want to force a sync, open the
+      Debug Panel → Network tab → hit Sync, or call <code>POST /api/sync</code> directly.</p>
+    </div>
+  </div>
+
+  <!-- ── Encryption ── -->
+  <div class="section" id="encryption">
+    <div class="section-header">
+      <div class="section-icon">🔒</div>
+      <h2>End-to-End Encryption (Experimental)
+        <span>Ristretto ECDH + HKDF-SHA256 + AES-256-GCM</span>
+      </h2>
+    </div>
+
+    <p>
+      Tari Messenger includes an <strong>experimental E2EE encryption feature</strong> for direct messages.
+      When enabled, message content is encrypted on the server before being stored on-chain. Even though the
+      ciphertext is publicly visible on a blockchain, only the sender and recipient can decrypt it.
+    </p>
+
+    <div class="warn-box">
+      <p>⚠ This is an experimental feature. It works correctly for DMs between wallets sharing the same
+      app instance (same <code>messaging-state.json</code>). See the limitations section below.</p>
+    </div>
+
+    <div class="enc-diagram">
+      <h3>🔒 Encryption Protocol</h3>
+
+      <div class="enc-step">
+        <div class="enc-num">1</div>
+        <div class="enc-body">
+          <strong>ECDH Key Agreement (Ristretto255)</strong><br>
+          <code>shared_point = recipient_pubkey × sender_secretkey</code><br>
+          Both the sender (using <em>their sk × recipient pk</em>) and the recipient (using <em>their sk × sender pk</em>)
+          compute the same shared point. This is standard Diffie-Hellman on an elliptic curve — the same
+          cryptography used by Signal, WhatsApp, and TLS.
+        </div>
+      </div>
+
+      <div class="enc-step">
+        <div class="enc-num">2</div>
+        <div class="enc-body">
+          <strong>Key Derivation (HKDF-SHA256)</strong><br>
+          <code>key = HKDF-SHA256(ikm=shared_point, info="tari-dm-v1:" + sorted(pk_a, pk_b))</code><br>
+          The 32-byte shared point is passed through HKDF to produce a 256-bit symmetric key.
+          Public keys are sorted before being used as the HKDF info string — this ensures the sender and
+          recipient always derive the same key regardless of who initiates.
+        </div>
+      </div>
+
+      <div class="enc-step">
+        <div class="enc-num">3</div>
+        <div class="enc-body">
+          <strong>Authenticated Encryption (AES-256-GCM)</strong><br>
+          <code>ciphertext = AES-256-GCM.encrypt(key, nonce=random_12_bytes, plaintext)</code><br>
+          Each message gets a fresh random 12-byte nonce. AES-GCM is an authenticated encryption mode —
+          it detects tampering. If any byte of the ciphertext is changed, decryption fails and the message
+          shows as undecryptable.
+        </div>
+      </div>
+
+      <div class="enc-step">
+        <div class="enc-num">4</div>
+        <div class="enc-body">
+          <strong>Wire Format</strong><br>
+          <code>ENC1:&lt;hex(nonce[12] || ciphertext)&gt;</code><br>
+          This string is stored on-chain. Anyone can see it's encrypted, but cannot read the content.
+          Messages without the <code>ENC1:</code> prefix are always treated as plaintext.
+        </div>
+      </div>
+    </div>
+
+    <div class="code-block">// On-chain stored message (example)
+"ENC1:a3f2b89c1d4e...f7a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5"
+//  └─ 12-byte nonce hex ─┘└──────── AES-GCM ciphertext hex ─────────────────┘
+
+// Decryption (using recipient's wallet key)
+shared_point = sender_pubkey × recipient_secretkey
+key = HKDF(shared_point, info="tari-dm-v1:alice_pk:bob_pk")
+plaintext = AES-256-GCM.decrypt(key, nonce, ciphertext)</div>
+
+    <h3 style="color:var(--text);margin:24px 0 12px;font-size:1rem">Enable Encryption</h3>
+    <p>
+      In the wallet info panel (bottom-left), toggle <strong>🔒 E2EE Encryption (experimental)</strong>.
+      All new DMs you send will be encrypted. Received encrypted DMs will automatically be decrypted
+      if you have the relevant wallet loaded. Successfully decrypted messages show a 🔒 lock icon.
+    </p>
+
+    <h3 style="color:var(--text);margin:24px 0 12px;font-size:1rem">Limitations</h3>
+
+    <div class="card">
+      <h3>⚠ Group chats are always plaintext</h3>
+      <p>ECDH requires exactly two parties — a sender and a recipient. Group rooms can have any number of
+      members, so there is no shared secret that works for all of them. Group room messages are never
+      encrypted, even with E2EE enabled. A warning bar appears when you enter a group room with encryption on.</p>
+    </div>
+
+    <div class="card">
+      <h3>⚠ Both wallets must share the same app instance</h3>
+      <p>Decryption requires the wallet's private key. If Wallet A sends an encrypted DM to Wallet B, and
+      Wallet B is loaded in the same app instance (same <code>messaging-state.json</code>), the app will
+      automatically decrypt it. If Wallet B is on a different machine, it needs to import the key and have
+      a compatible Tari Messenger running to decrypt.</p>
+    </div>
+
+    <div class="card">
+      <h3>⚠ Metadata is not hidden</h3>
+      <p>The blockchain always records the sender's public key, recipient's public key, and timestamp. Only the
+      <em>content</em> is encrypted. A blockchain observer can still see who is talking to whom and when.</p>
+    </div>
+
+    <div class="card">
+      <h3>⚠ No forward secrecy</h3>
+      <p>This implementation uses static ECDH — the same conversation key is derived from the same key pair.
+      If your private key is compromised, all past encrypted DMs can be decrypted. True forward secrecy
+      (like Signal's double ratchet) would require per-message ephemeral keys, which is a future enhancement.</p>
+    </div>
+
+    <div class="card">
+      <h3>⚠ Old messages are not re-encrypted</h3>
+      <p>Toggling encryption off does not change already-stored encrypted messages. They remain as
+      <code>ENC1:...</code> on-chain and in local state. Toggling encryption back on resumes encrypting
+      new messages only.</p>
+    </div>
+  </div>
+
+  <!-- ── Message Flow ── -->
+  <div class="section" id="flow">
+    <div class="section-header">
+      <div class="section-icon">📡</div>
+      <h2>How a message travels
+        <span>From keypress to blockchain commitment</span>
+      </h2>
+    </div>
+
+    <p>
+      When you press <strong>Enter</strong> or click ➤, here is every step that happens, in order.
+    </p>
+
+    <div class="flow">
+
+      <div class="flow-step">
+        <div class="flow-num">1</div>
+        <div class="flow-body">
+          <div class="flow-title">Browser → Web Server <span class="flow-tag">POST /api/dm/send</span></div>
+          <p>The chat UI sends a JSON request to the local Axum web server with the sender's public key,
+          recipient's public key, and the plaintext message content.</p>
+        </div>
+      </div>
+
+      <div class="flow-arrow">↓</div>
+
+      <div class="flow-step">
+        <div class="flow-num">2</div>
+        <div class="flow-body">
+          <div class="flow-title">Content Encryption (if enabled) <span class="enc-tag">🔒 E2EE</span></div>
+          <p>If encryption is enabled, the server performs ECDH using the sender's stored private key and the
+          recipient's public key to derive a shared AES-256-GCM key. A random 12-byte nonce is generated,
+          the content is encrypted, and the result is formatted as <code>ENC1:&lt;hex&gt;</code>.</p>
+          <div class="flow-note">If encryption is off, the content is stored and sent as-is (plaintext).</div>
+        </div>
+      </div>
+
+      <div class="flow-arrow">↓</div>
+
+      <div class="flow-step">
+        <div class="flow-num">3</div>
+        <div class="flow-body">
+          <div class="flow-title">Local Cache + UI Update <span class="flow-tag">Instant feedback</span></div>
+          <p>The message is immediately added to the server's in-memory <code>AppState.dms</code> list and
+          saved to <code>messaging-state.json</code>. The browser's next API poll renders it in the chat.
+          This makes the UI feel instant while the blockchain confirms in the background.</p>
+        </div>
+      </div>
+
+      <div class="flow-arrow">↓</div>
+
+      <div class="flow-step">
+        <div class="flow-num">4</div>
+        <div class="flow-body">
+          <div class="flow-title">Build Transaction <span class="flow-tag">TransactionBuilder</span></div>
+          <p>A background thread builds an unsigned transaction with two instructions:</p>
+          <div class="code-block">pay_fee_from_component(sender_account_address, 2_000 µTARI)
+call_method(component_address, "send_dm", [recipient_pubkey_hex, content])</div>
+          <p>Input references to the sender's fee vault and the messaging component are resolved from the indexer.</p>
+        </div>
+      </div>
+
+      <div class="flow-arrow">↓</div>
+
+      <div class="flow-step">
+        <div class="flow-num">5</div>
+        <div class="flow-body">
+          <div class="flow-title">Sign the Transaction <span class="flow-tag">Sender's private key</span></div>
+          <p>The unsigned transaction is signed with the sender's Ristretto private key. This proves to the
+          network that the sender authorised this exact transaction. The signature covers every byte — it
+          cannot be tampered with after signing.</p>
+          <div class="flow-note">🔒 The private key never leaves the local machine. Only the signed transaction is sent to the network.</div>
+        </div>
+      </div>
+
+      <div class="flow-arrow">↓</div>
+
+      <div class="flow-step">
+        <div class="flow-num">6</div>
+        <div class="flow-body">
+          <div class="flow-title">Submit to Indexer <span class="flow-tag">Esmeralda testnet</span></div>
+          <p>The signed transaction is broadcast to <code>ootle-indexer-a.tari.com</code>, which forwards it
+          to Tari Layer 2 validators. The app watches the transaction — polling until it is committed or rejected
+          (typically 10–60 seconds on testnet).</p>
+        </div>
+      </div>
+
+      <div class="flow-arrow">↓</div>
+
+      <div class="flow-step">
+        <div class="flow-num">7</div>
+        <div class="flow-body">
+          <div class="flow-title">Validators Execute the WASM Smart Contract <span class="flow-tag">On-chain</span></div>
+          <p>Validator nodes run the messaging WASM template. Inside the contract:</p>
+          <div class="code-block">pub fn send_dm(&amp;mut self, to: String, content: String) {
+    // "from" is authenticated by the blockchain — cannot be faked
+    let from = CallerContext::transaction_signer_public_key().to_string();
+    self.msg_from.push(from);
+    self.msg_to.push(to);
+    self.msg_content.push(content);  // ENC1:... or plaintext
+    self.next_id += 1;
+}</div>
+          <p>The <code>from</code> field is set by the network — not the caller. No one can spoof the sender.</p>
+        </div>
+      </div>
+
+      <div class="flow-arrow">↓</div>
+
+      <div class="flow-step">
+        <div class="flow-num">8</div>
+        <div class="flow-body">
+          <div class="flow-title">State Committed + Decryption on Read <span class="enc-tag">🔒 E2EE</span></div>
+          <p>The message (encrypted or not) is permanently stored in the component's on-chain state.
+          When a recipient queries <code>GET /api/dm/messages</code>, the server attempts to decrypt
+          using any loaded wallet key that matches the sender or recipient. Successfully decrypted
+          messages return with <code>"encrypted": true</code> in the API response — the UI shows a 🔒 badge.</p>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="identity-box">
+      <h3>🔑 Your On-Chain Identity</h3>
+      <p>There is no username or email. Your identity is your <strong>Ristretto public key</strong> —
+      a 32-byte elliptic curve point shown as a 64-character hex string:</p>
+      <div class="code-block">3a8f2c1d...b9e4f2a1  (64 hex chars = your address on Tari)</div>
+      <p>
+        This key is derived from your private key using Ristretto255 scalar multiplication.
+        Every on-chain message uses this key as the <code>from</code> or <code>to</code> address.
+        The human-readable display name ("Alice") only exists in the local app state — the blockchain
+        only knows public keys.
+      </p>
+      <p>
+        Encryption adds another layer: the same key pair used for on-chain identity is also used for
+        ECDH key agreement. This means no separate encryption keys are needed — your wallet IS your
+        encryption identity.
+      </p>
+    </div>
+  </div>
+
+  <!-- ── Fees ── -->
+  <div class="section" id="fees">
+    <div class="section-header">
+      <div class="section-icon">💰</div>
+      <h2>Token Costs &amp; Fees
+        <span>What each action costs in tTARI</span>
+      </h2>
+    </div>
+
+    <p>
+      Every on-chain action costs a fee in <strong>micro-TARI (µTARI)</strong>.
+      1 tTARI = 1,000,000 µTARI. Each new wallet starts with 10 tTARI (10,000,000 µTARI) from the faucet.
+    </p>
+
+    <div class="card" style="padding: 0; overflow: hidden;">
+      <table class="fee-table">
+        <thead>
+          <tr>
+            <th>Action</th>
+            <th>Fee (µTARI)</th>
+            <th>Fee (tTARI)</th>
+            <th>Notes</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Fund from faucet</td>
+            <td class="fee-amount">500</td>
+            <td class="fee-amount">0.0005</td>
+            <td>You receive 10 tTARI (10,000,000 µTARI)</td>
+          </tr>
+          <tr>
+            <td>Publish template</td>
+            <td class="fee-amount">~250,000</td>
+            <td class="fee-amount">0.25</td>
+            <td>One-time; proportional to WASM size</td>
+          </tr>
+          <tr>
+            <td>Deploy component</td>
+            <td class="fee-amount">2,000</td>
+            <td class="fee-amount">0.002</td>
+            <td>One-time per messaging component</td>
+          </tr>
+          <tr>
+            <td>Send DM</td>
+            <td class="fee-amount">2,000</td>
+            <td class="fee-amount">0.002</td>
+            <td>Per message, paid by the sender</td>
+          </tr>
+          <tr>
+            <td>Create room</td>
+            <td class="fee-amount">2,000</td>
+            <td class="fee-amount">0.002</td>
+            <td>One-time per room</td>
+          </tr>
+          <tr>
+            <td>Post to room</td>
+            <td class="fee-amount">2,000</td>
+            <td class="fee-amount">0.002</td>
+            <td>Per post, paid by the poster</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="highlight">
+      <p>📊 <strong>Budget example:</strong> With 10 tTARI, after the initial setup (~252,000 µTARI),
+      you have ~9,748,000 µTARI left — enough for about <strong>4,874 messages</strong>.
+      You can always refill with 💧 Faucet.</p>
+    </div>
+    <p>
+      The <strong>Debug Panel</strong> (🔍 icon, top-right) shows every transaction with its type, status,
+      fee paid, and the transaction ID.
+    </p>
+  </div>
+
+  <!-- ── Concepts ── -->
+  <div class="section" id="concepts">
+    <div class="section-header">
+      <div class="section-icon">⛓️</div>
+      <h2>Blockchain Concepts Explained
+        <span>Plain-language guide for newcomers</span>
+      </h2>
+    </div>
+
+    <div class="concept-grid">
+      <div class="concept-card">
+        <div class="icon">📜</div>
+        <h3>Template (Smart Contract)</h3>
+        <p>A Rust program compiled to WebAssembly (WASM) that runs on the blockchain. Defines what the
+        messaging service can do: store messages, check identities, return conversations.</p>
+      </div>
+      <div class="concept-card">
+        <div class="icon">🏠</div>
+        <h3>Component (Contract Instance)</h3>
+        <p>A deployed, live copy of a template with its own on-chain state (the actual messages).
+        The template is the code; the component is the running instance.</p>
+      </div>
+      <div class="concept-card">
+        <div class="icon">🔑</div>
+        <h3>Wallet / Account</h3>
+        <p>A cryptographic key pair. The account secret key signs transactions. The public key is your
+        on-chain identity — it can't be faked. Losing the key = losing the wallet.</p>
+      </div>
+      <div class="concept-card">
+        <div class="icon">💸</div>
+        <h3>tTARI Tokens</h3>
+        <p>The native testnet currency, used to pay fees. Free from the faucet. No real-world value.
+        This app uses Esmeralda testnet tTARI only.</p>
+      </div>
+      <div class="concept-card">
+        <div class="icon">📦</div>
+        <h3>Transaction</h3>
+        <p>Any action that changes on-chain state. Each is signed with your private key, broadcast to the
+        network, verified by validators, and permanently recorded on-chain.</p>
+      </div>
+      <div class="concept-card">
+        <div class="icon">🔍</div>
+        <h3>Indexer</h3>
+        <p>A service that indexes the blockchain and makes it queryable. This app connects to
+        <code>ootle-indexer-a.tari.com</code> to submit transactions and read component state.</p>
+      </div>
+      <div class="concept-card">
+        <div class="icon">🔒</div>
+        <h3>ECDH</h3>
+        <p>Elliptic Curve Diffie-Hellman — a protocol for two parties to derive the same shared secret using
+        only their public keys and their own private key. The basis of the E2EE feature here.</p>
+      </div>
+      <div class="concept-card">
+        <div class="icon">🌱</div>
+        <h3>BIP-39 Seed Words</h3>
+        <p>A 24-word mnemonic phrase encoding your private key as human-readable words. Easier to write down
+        and restore than raw hex. Each key (account + view) has its own seed word list.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Templates & Components ── -->
+  <div class="section" id="templates">
+    <div class="section-header">
+      <div class="section-icon">📜</div>
+      <h2>Templates &amp; Components
+        <span>How the smart contract actually works</span>
+      </h2>
+    </div>
+
+    <div class="card">
+      <h3>What is a Template?</h3>
+      <p>A <strong>template</strong> is the smart contract — the code that runs on the Tari Layer 2 blockchain.
+      It's written in Rust, compiled to WebAssembly (<code>.wasm</code>), and uploaded to the network once.
+      After that, anyone can use it.</p>
+      <p>Think of a template like a <em>class definition</em> in programming. It defines the structure and
+      behaviour — what data it holds, what methods it exposes, what rules it enforces — but it isn't a live
+      running thing by itself.</p>
+      <p>For this app the template lives in <code>messaging_template/src/lib.rs</code>. It exposes methods like
+      <code>send_dm</code>, <code>create_room</code>, <code>send_room_post</code>, and query methods to read
+      messages back. The <code>from</code> field on every message is set by the network itself using the
+      signer's verified public key — it cannot be faked or spoofed by passing a different value in.</p>
+      <div class="code-block">// Simplified template structure
+#[template]
+mod messaging_service {
+    pub struct MessagingService {
+        dm_from:      Vec&lt;String&gt;,   // sender public key
+        dm_to:        Vec&lt;String&gt;,   // recipient public key
+        dm_content:   Vec&lt;String&gt;,   // message content (or ENC1:... if encrypted)
+        dm_timestamp: Vec&lt;u64&gt;,      // unix seconds
+
+        rooms:        Vec&lt;String&gt;,   // room IDs
+        room_posts:   Vec&lt;String&gt;,   // room message bodies
+        // ...
+    }
+
+    impl MessagingService {
+        pub fn send_dm(&amp;mut self, to: String, content: String) {
+            // The network fills in `from` — the caller cannot lie about their identity
+            let from = CallerContext::transaction_signer_public_key().to_hex();
+            self.dm_from.push(from);
+            self.dm_to.push(to);
+            self.dm_content.push(content);
+            self.dm_timestamp.push(now());
+        }
+    }
+}</div>
+    </div>
+
+    <div class="card">
+      <h3>What is a Component?</h3>
+      <p>A <strong>component</strong> is a live, deployed <em>instance</em> of a template — like creating an
+      object from a class. It has its own unique address on-chain and its own state (the actual stored messages,
+      rooms, and posts).</p>
+      <p>When you first set up this app, it deploys a messaging component from the template. That component
+      gets a permanent address like <code>component_0e69766efc95e...</code>. Every DM and room post you send
+      is a transaction that calls a method on <em>that specific component</em> and updates its state permanently.</p>
+      <p>The relationship is:</p>
+      <ul style="margin:8px 0 0 18px;line-height:2">
+        <li><strong>Template</strong> = the blueprint (uploaded once, shared by all)</li>
+        <li><strong>Component</strong> = your live instance (unique address, your data)</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h3>How the App Uses the Template</h3>
+      <p>Here is the exact sequence when you send a DM:</p>
+      <ol style="margin:8px 0 0 18px;line-height:2.2">
+        <li>The web server builds a <strong>transaction</strong>:
+          <code>call_method(component_address, "send_dm", [recipient_pk, content])</code></li>
+        <li>The transaction is <strong>signed</strong> with the sender's private key (held in the server, never the browser)</li>
+        <li>The signed transaction is <strong>submitted</strong> to the Esmeralda indexer</li>
+        <li><strong>Validator nodes</strong> on the network receive it, run the WASM template code, verify the
+          signature, and if valid, commit the state change to the component</li>
+        <li>The component's on-chain state now contains the new message — permanently and immutably</li>
+        <li>The background sync task reads it back via the indexer REST API and shows it in the UI</li>
+      </ol>
+      <p>The component address is stored in the app's state file. If you lose it, the messages still exist
+      on-chain — you just need the address to find them again.</p>
+    </div>
+
+    <div class="card">
+      <h3>Running Your Own Instance</h3>
+      <p>Because templates are shared code on the network, <strong>anyone can deploy their own component</strong>
+      from the same template and have a completely independent messaging instance. Your component's state is
+      separate from everyone else's — no one can read or write to it unless they know your component address
+      and have a valid wallet.</p>
+      <p>To run your own instance:</p>
+      <ol style="margin:8px 0 0 18px;line-height:2.2">
+        <li><strong>Build the WASM</strong> — <code>cd messaging_template &amp;&amp; cargo build --target wasm32-unknown-unknown --release</code></li>
+        <li><strong>Publish the template</strong> — go to ⚙ Settings → Configure Template → upload the
+          <code>.wasm</code> file and click Publish. This costs ~250,000 µTARI in fees and takes ~60 seconds
+          to confirm on-chain. You get back a <strong>template address</strong>.</li>
+        <li><strong>Deploy a component</strong> — the app automatically calls <code>call_function(template_address, "new", [])</code>
+          to create a fresh component instance. You get a <strong>component address</strong>.</li>
+        <li><strong>Share the component address</strong> — anyone who wants to join your messaging network
+          can go to ⚙ Settings → Join Existing and paste your component address. They'll see the same messages
+          and can send into the same component.</li>
+      </ol>
+      <p>Alternatively, you can skip publishing and join a <em>pre-existing</em> component that someone else
+      already deployed — you'll share the same message space with them. The component address is the only thing
+      you need to join.</p>
+    </div>
+
+    <div class="card">
+      <h3>Why Deploy Your Own vs. Joining an Existing One?</h3>
+      <table style="width:100%;border-collapse:collapse;font-size:13px;margin-top:8px">
+        <thead>
+          <tr style="border-bottom:1px solid var(--divider)">
+            <th style="text-align:left;padding:6px 8px;color:var(--subtext)">Your Own Component</th>
+            <th style="text-align:left;padding:6px 8px;color:var(--subtext)">Join Existing</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr style="border-bottom:1px solid var(--divider)">
+            <td style="padding:6px 8px">Full isolation — your messages, your network</td>
+            <td style="padding:6px 8px">Shared space with whoever deployed it</td>
+          </tr>
+          <tr style="border-bottom:1px solid var(--divider)">
+            <td style="padding:6px 8px">Costs ~250,000 µTARI to publish template</td>
+            <td style="padding:6px 8px">Free — just paste a component address</td>
+          </tr>
+          <tr style="border-bottom:1px solid var(--divider)">
+            <td style="padding:6px 8px">You control who gets the address</td>
+            <td style="padding:6px 8px">Anyone with the address can post</td>
+          </tr>
+          <tr>
+            <td style="padding:6px 8px">~60 seconds to deploy on Esmeralda testnet</td>
+            <td style="padding:6px 8px">Instant — no transaction needed</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <h3>Modifying the Template</h3>
+      <p>Because the template source is in <code>messaging_template/src/lib.rs</code>, you can modify it —
+      add new message fields, change access rules, add new room features — recompile, publish a new template,
+      and deploy a fresh component from your modified version. The old component keeps running with the old
+      code; you'd start fresh with a new component address.</p>
+      <p>This is the core of how Tari Ootle works: anyone can fork the code, publish their own template,
+      and run a completely independent instance with custom behaviour — no permission needed from anyone.</p>
+    </div>
+  </div>
+
+  <!-- ── Architecture ── -->
+  <div class="section" id="architecture">
+    <div class="section-header">
+      <div class="section-icon">🏗️</div>
+      <h2>Code Architecture
+        <span>For the curious developer</span>
+      </h2>
+    </div>
+
+    <div class="card">
+      <h3>messaging_template/ — The Smart Contract</h3>
+      <p>Written in Rust, compiled to <code>.wasm</code> with <code>cargo build --target wasm32-unknown-unknown --release</code>.
+      Uses Tari's <code>tari_template_lib</code> crate. Stores messages as parallel <code>Vec&lt;String&gt;</code> fields
+      (from, to, content, timestamp) and exposes methods: <code>send_dm</code>, <code>send_room_post</code>,
+      <code>create_room</code>, and query methods. The <code>from</code> field is always set by
+      <code>CallerContext::transaction_signer_public_key()</code> — the network's verified identity, not a parameter.</p>
+    </div>
+
+    <div class="card">
+      <h3>messaging_app/ — The Web Server &amp; UI</h3>
+      <p>An <a href="https://github.com/tokio-rs/axum" style="color:var(--blue)">Axum</a> HTTP server
+      (Rust, async, Tokio) serving the WhatsApp-style frontend and a REST API on port 3000.
+      Uses <code>ootle-rs</code> to sign and submit transactions. Because <code>IndexerProvider</code>
+      is <code>!Send</code>, all blockchain operations run in dedicated OS threads with single-threaded
+      Tokio runtimes (<code>spawn_blocking</code> + <code>new_current_thread</code>).</p>
+    </div>
+
+    <div class="card">
+      <h3>Encryption Layer — Server-side</h3>
+      <p>AES-256-GCM encryption/decryption happens entirely in the Rust server (<code>messaging_app/src/main.rs</code>).
+      The private keys are never sent to the browser. The encryption helpers use:
+      <code>tari_crypto</code> (Ristretto ECDH), <code>hkdf</code> (key derivation), <code>aes-gcm</code>
+      (symmetric encryption), and <code>rand</code> (nonce generation). All are pure Rust crates with
+      no native dependencies.</p>
+    </div>
+
+    <div class="card">
+      <h3>State Persistence</h3>
+      <p>All app state is saved to a JSON file (<code>messaging-state-&lt;name&gt;.json</code> by default).
+      Contains all wallet keys, template/component addresses, all local DMs, room messages, contacts, encryption
+      setting, and the transaction history. On restart, the app loads this file and resumes exactly where it
+      left off — no re-setup needed.</p>
+    </div>
+
+    <div class="card">
+      <h3>Chain Sync</h3>
+      <p>A background task polls the Esmeralda indexer REST API every 10 seconds via
+      <code>GET https://ootle-indexer-a.tari.com/substates/{component_id}</code>.
+      The component's on-chain state is CBOR-encoded JSON. The server parses it and imports any messages not
+      already in the local cache (using a set of <code>synced_event_ids</code> to avoid duplicates).</p>
+    </div>
+
+    <div class="card">
+      <h3>API Endpoints</h3>
+      <p>Full REST API at <code>http://localhost:3000/api/</code>. Key endpoints:<br>
+      <code>GET /api/status</code> · <code>GET /api/wallets</code> · <code>POST /api/wallet/create</code> ·
+      <code>POST /api/wallet/import</code> · <code>GET /api/wallet/balance</code> ·
+      <code>GET /api/wallet/export-keys</code> · <code>POST /api/wallet/import-mnemonic</code> ·
+      <code>POST /api/template/configure</code> · <code>POST /api/template/publish</code> ·
+      <code>POST /api/component/join</code> · <code>POST /api/dm/send</code> ·
+      <code>GET /api/dm/messages</code> · <code>GET /api/dm/inbox</code> ·
+      <code>POST /api/room/create</code> · <code>POST /api/room/join</code> ·
+      <code>POST /api/room/post</code> · <code>GET /api/room/messages</code> ·
+      <code>GET /api/rooms</code> · <code>GET /api/contacts</code> ·
+      <code>POST /api/contacts/set</code> · <code>POST /api/sync</code> ·
+      <code>GET /api/settings</code> · <code>POST /api/settings</code> · <code>GET /api/debug</code></p>
+    </div>
+  </div>
+
+  <!-- ── Troubleshooting ── -->
+  <div class="section" id="troubleshooting">
+    <div class="section-header">
+      <div class="section-icon">🛠️</div>
+      <h2>Troubleshooting
+        <span>Common issues and fixes</span>
+      </h2>
+    </div>
+
+    <div class="card">
+      <h3>Setup is stuck / "Error" status</h3>
+      <p>The Esmeralda testnet can be slow or occasionally unavailable. Wait 60–90 seconds and refresh.
+      If it stays stuck, check the Debug Panel for error details. As a last resort, delete the state file
+      and restart the app to start fresh.</p>
+    </div>
+
+    <div class="card">
+      <h3>"WASM not found" when publishing</h3>
+      <p>Run <code>cd messaging_template &amp;&amp; cargo build --target wasm32-unknown-unknown --release</code>
+      first. The <code>launch.bat</code> script does this automatically.</p>
+    </div>
+
+    <div class="card">
+      <h3>Transaction rejected / insufficient fees</h3>
+      <p>Your wallet may be out of tTARI. Click <em>↺ Balance</em> in the wallet HUD to check, then
+      <em>💧 Faucet</em> to refill. If fees still fail, the testnet may be congested — try again in 30 seconds.</p>
+    </div>
+
+    <div class="card">
+      <h3>Messages appear locally but "Encrypted message — key not available"</h3>
+      <p>The recipient's wallet is not loaded in this app instance. Import the recipient's wallet (via keys
+      or seed words) so the app can decrypt the messages. Both the sender and recipient wallet need to be
+      in the same <code>messaging-state.json</code> for decryption to work automatically.</p>
+    </div>
+
+    <div class="card">
+      <h3>Balance shows "Unknown" or stuck</h3>
+      <p>Click <em>↺ Balance</em> manually. The balance is fetched from the indexer REST API, which can be
+      slow. If it's still failing, check <code>GET /api/wallet/balance?wallet_pk=&lt;pk&gt;</code> in the
+      browser for the raw error.</p>
+    </div>
+
+    <div class="card">
+      <h3>Messages not syncing from chain</h3>
+      <p>The chain sync runs every 10 seconds. Force a sync via Debug Panel → Network tab → Sync button,
+      or call <code>POST /api/sync</code>. If the component address is wrong, check the Settings modal
+      and re-configure/join with the correct component address.</p>
+    </div>
+
+    <div class="card">
+      <h3>Sharing the app with others</h3>
+      <p>Others need to run their own instance of the app. Share your <strong>component address</strong>
+      (from ⚙ Settings → Join Existing) so they can join the same messaging component. They also need to
+      know your public key (from the wallet HUD) to DM you.</p>
+    </div>
+  </div>
+
+</main>
+
+<footer>
+  <p>
+    Built on <a href="https://www.tari.com/" target="_blank">Tari</a> Ootle Layer 2 testnet ·
+    <a href="https://ootle.tari.com/guides/" target="_blank">Developer Guides</a> ·
+    <a href="http://localhost:3000">← Back to the App</a>
+  </p>
+</footer>
+
+</body>
+</html>

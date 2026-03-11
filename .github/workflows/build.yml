@@ -1,0 +1,60 @@
+name: Build
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: 1
+
+jobs:
+  # ── Build the WASM smart contract ──────────────────────────────────────────
+  build-template:
+    name: WASM Template
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+
+      - name: Cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: messaging_template
+
+      - name: Build WASM
+        working-directory: messaging_template
+        run: cargo build --target wasm32-unknown-unknown --release
+
+      - name: Run tests
+        working-directory: messaging_template
+        run: cargo test
+
+  # ── Check the Axum web app ──────────────────────────────────────────────────
+  check-app:
+    name: App (cargo check)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: messaging_app
+
+      - name: Check
+        working-directory: messaging_app
+        run: cargo check
+
+      - name: Clippy
+        working-directory: messaging_app
+        run: cargo clippy -- -D warnings

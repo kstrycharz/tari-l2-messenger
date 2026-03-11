@@ -1,0 +1,2113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tari Messenger</title>
+<style>
+:root {
+  --bg: #0e1621;
+  --sidebar: #17212b;
+  --surface: #1e2c3a;
+  --surface2: #242f3d;
+  --accent: #5288c1;
+  --accent-dim: #2b5278;
+  --text: #e8edf2;
+  --subtext: #708499;
+  --divider: #283644;
+  --success: #4caf50;
+  --warning: #ff9800;
+  --error: #f44336;
+  --radius: 10px;
+  --sidebar-w: 320px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); height: 100vh; overflow: hidden; }
+
+/* ── Layout ── */
+#app { display: flex; height: 100vh; position: relative; }
+#sidebar { width: var(--sidebar-w); min-width: var(--sidebar-w); background: var(--sidebar); display: flex; flex-direction: column; border-right: 1px solid var(--divider); }
+#chat-panel { flex: 1; display: flex; flex-direction: column; background: var(--bg); min-width: 0; }
+
+/* ── Sidebar Header ── */
+#sidebar-header { padding: 12px 16px; background: var(--surface); display: flex; align-items: center; gap: 10px; border-bottom: 1px solid var(--divider); min-height: 60px; position: relative; }
+#wallet-selector { flex: 1; cursor: pointer; min-width: 0; }
+#wallet-selector .ws-name { font-weight: 600; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#wallet-selector .ws-pk { font-size: 11px; color: var(--subtext); font-family: monospace; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.icon-btn { width: 36px; height: 36px; border-radius: 50%; border: none; background: transparent; color: var(--subtext); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; transition: background 0.15s; }
+.icon-btn:hover { background: var(--surface2); color: var(--text); }
+
+/* ── Sidebar Actions ── */
+#sidebar-actions { padding: 8px 12px; display: flex; flex-wrap: wrap; gap: 6px; border-bottom: 1px solid var(--divider); }
+.action-btn { flex: 1; min-width: calc(50% - 3px); padding: 7px 4px; border-radius: 8px; border: 1px solid var(--divider); background: transparent; color: var(--subtext); cursor: pointer; font-size: 11px; display: flex; align-items: center; gap: 3px; justify-content: center; transition: all 0.15s; white-space: nowrap; }
+.action-btn:hover { background: var(--surface2); color: var(--text); border-color: var(--accent); }
+
+/* ── Setup Banner ── */
+#setup-banner { padding: 12px 16px; display: flex; align-items: center; gap: 10px; font-size: 12px; border-bottom: 1px solid var(--divider); }
+#setup-banner.needs-wallet { background: #2d1b00; }
+#setup-banner.needs-template { background: #1b2a1b; }
+#setup-banner.deploying { background: #1a1d2b; }
+#setup-banner.error-state { background: #2b1a1a; }
+#setup-banner .sb-icon { font-size: 18px; flex-shrink: 0; }
+#setup-banner .sb-text { flex: 1; line-height: 1.4; }
+#setup-banner .sb-btn { padding: 5px 12px; border-radius: 6px; border: none; background: var(--accent); color: white; cursor: pointer; font-size: 11px; white-space: nowrap; flex-shrink: 0; }
+.spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid var(--divider); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; vertical-align: middle; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Conversation List ── */
+#conv-list { flex: 1; overflow-y: auto; }
+#conv-list::-webkit-scrollbar { width: 4px; }
+#conv-list::-webkit-scrollbar-thumb { background: var(--divider); border-radius: 2px; }
+.conv-item { display: flex; align-items: center; gap: 12px; padding: 12px 16px; cursor: pointer; border-bottom: 1px solid var(--divider); transition: background 0.1s; }
+.conv-item:hover { background: var(--surface2); }
+.conv-item.active { background: var(--accent-dim); }
+.conv-avatar { width: 42px; height: 42px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 700; flex-shrink: 0; }
+.conv-avatar.dm-av { background: var(--accent); }
+.conv-avatar.room-av { background: #2a5f2a; color: #8fd88f; }
+.conv-info { flex: 1; min-width: 0; }
+.conv-name { font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.conv-preview { font-size: 12px; color: var(--subtext); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.conv-time { font-size: 11px; color: var(--subtext); flex-shrink: 0; }
+.empty-list { padding: 24px 16px; text-align: center; color: var(--subtext); font-size: 13px; line-height: 1.6; }
+
+/* ── Chat Header ── */
+#chat-header { padding: 12px 16px; background: var(--surface); display: flex; align-items: center; gap: 12px; border-bottom: 1px solid var(--divider); min-height: 60px; }
+.ch-avatar { width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 700; background: var(--accent); flex-shrink: 0; }
+.ch-info { flex: 1; min-width: 0; }
+.ch-name { font-weight: 600; font-size: 15px; }
+.ch-sub { font-size: 11px; color: var(--subtext); font-family: monospace; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#header-tools { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.learn-btn { font-size: 12px; color: var(--accent); text-decoration: none; padding: 5px 10px; border-radius: 6px; border: 1px solid var(--accent); transition: all 0.15s; white-space: nowrap; }
+.learn-btn:hover { background: var(--accent); color: white; }
+
+/* ── Messages Area ── */
+#messages-area { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 3px; }
+#messages-area::-webkit-scrollbar { width: 4px; }
+#messages-area::-webkit-scrollbar-thumb { background: var(--divider); border-radius: 2px; }
+.msg-row { display: flex; }
+.msg-row.mine { justify-content: flex-end; }
+.msg-row.theirs { justify-content: flex-start; }
+.msg-bubble { max-width: 68%; padding: 8px 12px; border-radius: 12px; font-size: 14px; line-height: 1.45; word-break: break-word; }
+.msg-row.mine .msg-bubble { background: var(--accent-dim); border-bottom-right-radius: 3px; }
+.msg-row.theirs .msg-bubble { background: var(--surface); border-bottom-left-radius: 3px; }
+.msg-sender { font-size: 11px; font-weight: 600; color: #64b5f6; margin-bottom: 3px; }
+.msg-time { font-size: 10px; color: var(--subtext); text-align: right; margin-top: 3px; }
+.date-divider { text-align: center; color: var(--subtext); font-size: 12px; padding: 10px 0; }
+
+/* ── Input Area ── */
+#input-area { padding: 12px 16px; background: var(--surface); border-top: 1px solid var(--divider); display: flex; gap: 10px; align-items: flex-end; }
+#msg-input { flex: 1; background: var(--surface2); border: 1px solid var(--divider); border-radius: 20px; padding: 10px 16px; color: var(--text); font-size: 14px; resize: none; max-height: 120px; outline: none; font-family: inherit; line-height: 1.4; }
+#msg-input:focus { border-color: var(--accent); }
+#msg-input::placeholder { color: var(--subtext); }
+#send-btn { width: 42px; height: 42px; border-radius: 50%; border: none; background: var(--accent); color: white; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; transition: background 0.15s; }
+#send-btn:hover:not(:disabled) { background: #3d6fa8; }
+#send-btn:disabled { background: var(--surface2); color: var(--subtext); cursor: not-allowed; }
+
+/* ── Welcome ── */
+#welcome { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--subtext); text-align: center; gap: 12px; padding: 24px; }
+#welcome h2 { color: var(--text); font-size: 22px; }
+#welcome p { font-size: 14px; max-width: 320px; line-height: 1.6; }
+
+/* ── Modals ── */
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.65); display: flex; align-items: center; justify-content: center; z-index: 100; }
+.modal { background: var(--sidebar); border-radius: 14px; padding: 24px; width: 420px; max-width: 95vw; max-height: 90vh; overflow-y: auto; box-shadow: 0 8px 40px rgba(0,0,0,0.6); }
+.modal h2 { font-size: 18px; margin-bottom: 16px; }
+.modal-tabs { display: flex; border-bottom: 1px solid var(--divider); margin-bottom: 18px; }
+.modal-tab { flex: 1; padding: 9px; text-align: center; cursor: pointer; font-size: 12px; color: var(--subtext); border-bottom: 2px solid transparent; transition: all 0.15s; }
+.modal-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+.form-group { margin-bottom: 14px; }
+.form-group label { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--subtext); margin-bottom: 5px; }
+.form-input { width: 100%; background: var(--surface2); border: 1px solid var(--divider); border-radius: 8px; padding: 10px 12px; color: var(--text); font-size: 13px; outline: none; font-family: monospace; transition: border 0.15s; }
+.form-input:focus { border-color: var(--accent); }
+.form-input.sans { font-family: inherit; }
+.form-note { font-size: 11px; color: var(--subtext); margin-top: 6px; line-height: 1.5; }
+.modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 18px; }
+.btn-primary { padding: 9px 20px; border-radius: 8px; border: none; background: var(--accent); color: white; cursor: pointer; font-size: 13px; font-weight: 600; transition: background 0.15s; }
+.btn-primary:hover:not(:disabled) { background: #3d6fa8; }
+.btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-secondary { padding: 9px 20px; border-radius: 8px; border: 1px solid var(--divider); background: transparent; color: var(--text); cursor: pointer; font-size: 13px; transition: all 0.15s; }
+.btn-secondary:hover:not(:disabled) { background: var(--surface2); }
+.btn-secondary:disabled { opacity: 0.5; cursor: not-allowed; }
+.modal-status { margin-top: 12px; padding: 10px 12px; border-radius: 8px; font-size: 13px; display: none; }
+.modal-status.info { background: rgba(82,136,193,0.15); border: 1px solid rgba(82,136,193,0.3); color: #90caf9; }
+.modal-status.success { background: rgba(76,175,80,0.15); border: 1px solid rgba(76,175,80,0.3); color: #a5d6a7; }
+.modal-status.error { background: rgba(244,67,54,0.15); border: 1px solid rgba(244,67,54,0.3); color: #ef9a9a; }
+
+/* ── Wallet Dropdown ── */
+#wallet-dropdown { position: absolute; top: 60px; left: 0; right: 0; background: var(--sidebar); border: 1px solid var(--divider); border-top: none; z-index: 50; box-shadow: 0 4px 20px rgba(0,0,0,0.5); }
+.wd-item { padding: 11px 16px; cursor: pointer; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid var(--divider); transition: background 0.1s; }
+.wd-item:hover { background: var(--surface2); }
+.wd-item.wd-active { background: var(--accent-dim); }
+.wd-dot { width: 32px; height: 32px; border-radius: 50%; background: var(--accent); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; flex-shrink: 0; }
+.wd-name { font-weight: 600; font-size: 13px; }
+.wd-pk { font-size: 10px; color: var(--subtext); font-family: monospace; }
+.wd-add { padding: 11px 16px; color: var(--accent); font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 8px; }
+.wd-add:hover { background: var(--surface2); }
+
+/* ── Debug Panel ── */
+#debug-panel { position: fixed; right: 0; top: 0; width: 400px; height: 100vh; background: var(--sidebar); border-left: 1px solid var(--divider); z-index: 40; display: none; flex-direction: column; box-shadow: -4px 0 20px rgba(0,0,0,0.4); }
+#debug-panel.open { display: flex; }
+#debug-panel header { padding: 16px; background: var(--surface); border-bottom: 1px solid var(--divider); font-weight: 700; font-size: 15px; display: flex; align-items: center; justify-content: space-between; }
+.debug-tabs { display: flex; border-bottom: 1px solid var(--divider); }
+.debug-tab { flex: 1; padding: 9px; text-align: center; cursor: pointer; font-size: 12px; color: var(--subtext); border-bottom: 2px solid transparent; transition: all 0.15s; }
+.debug-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+.debug-body { flex: 1; overflow-y: auto; padding: 14px; }
+.d-stat { background: var(--surface); border-radius: 8px; padding: 10px 14px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; font-size: 12px; }
+.d-stat .d-label { color: var(--subtext); white-space: nowrap; flex-shrink: 0; }
+.d-stat .d-val { font-family: monospace; color: var(--text); text-align: right; word-break: break-all; font-size: 11px; }
+.d-section { font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--subtext); margin: 14px 0 6px; }
+.tx-card { background: var(--surface); border-radius: 8px; margin-bottom: 8px; cursor: pointer; border: 1px solid var(--divider); overflow: hidden; transition: border-color 0.15s; }
+.tx-card:hover { border-color: var(--accent-dim); }
+.tx-card-header { display: flex; gap: 8px; padding: 9px 12px; align-items: center; font-size: 11px; flex-wrap: wrap; }
+.tx-badge { background: var(--accent-dim); color: #90caf9; border-radius: 4px; padding: 2px 7px; font-size: 10px; font-weight: 700; white-space: nowrap; }
+.tx-card .tx-fee { color: var(--warning); font-family: monospace; margin-left: auto; white-space: nowrap; }
+.tx-card .tx-time { color: var(--subtext); white-space: nowrap; font-size: 10px; }
+.tx-card-body { display: none; padding: 0 12px 10px; border-top: 1px solid var(--divider); margin-top: 0; }
+.tx-card.expanded .tx-card-body { display: block; }
+.tx-card.expanded { border-color: var(--accent); }
+.tx-field { display: flex; gap: 8px; padding: 5px 0; border-bottom: 1px solid var(--divider); font-size: 11px; }
+.tx-field:last-child { border-bottom: none; }
+.tx-fl { color: var(--subtext); white-space: nowrap; flex-shrink: 0; min-width: 70px; padding-top: 1px; }
+.tx-fv { font-family: monospace; color: var(--text); word-break: break-all; line-height: 1.5; }
+.tx-hint { color: var(--subtext); font-size: 10px; text-align: center; padding: 4px 0 2px; opacity: 0.6; }
+.tx-events-btn { background: var(--surface2); border: 1px solid var(--divider); color: var(--accent); font-size: 11px; border-radius: 6px; padding: 4px 10px; cursor: pointer; }
+.tx-events-btn:hover { background: var(--accent); color: #fff; }
+.tx-events-btn:disabled { opacity: 0.5; cursor: default; }
+.tx-events-panel { margin-top: 6px; }
+.tx-ev-item { border-radius: 6px; padding: 6px 8px; margin-bottom: 4px; font-size: 11px; }
+.tx-ev-item .ev-topic { font-weight: 600; margin-bottom: 3px; }
+.tx-ev-item .ev-payload { font-family: monospace; color: var(--text); white-space: pre-wrap; word-break: break-all; font-size: 10px; opacity: 0.85; }
+
+/* ── Wallet HUD ── */
+#wallet-hud { background: var(--surface); border-top: 1px solid var(--divider); padding: 10px 12px; display: none; flex-direction: column; gap: 6px; flex-shrink: 0; }
+#wallet-hud.visible { display: flex; }
+.hud-name { font-weight: 700; font-size: 13px; color: var(--text); }
+.hud-row { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--subtext); }
+.hud-row span.hud-mono { font-family: monospace; color: var(--text); font-size: 10px; cursor: pointer; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hud-row span.hud-mono:hover { color: var(--accent); }
+.hud-copy { background: none; border: none; color: var(--subtext); cursor: pointer; font-size: 12px; padding: 1px 4px; border-radius: 3px; flex-shrink: 0; }
+.hud-copy:hover { color: var(--text); background: var(--surface2); }
+.hud-balance { font-size: 13px; font-weight: 600; color: var(--success); }
+.hud-btns { display: flex; gap: 6px; margin-top: 2px; }
+.hud-btn { flex: 1; padding: 5px 4px; border-radius: 6px; border: 1px solid var(--divider); background: transparent; color: var(--subtext); cursor: pointer; font-size: 10px; text-align: center; transition: all 0.15s; white-space: nowrap; }
+.hud-btn:hover { background: var(--surface2); color: var(--text); border-color: var(--accent); }
+
+/* ── Encryption Toggle ── */
+.enc-toggle { display:flex; align-items:center; gap:6px; font-size:11px; color:var(--subtext); cursor:pointer; padding:4px 6px; border-radius:6px; transition:background 0.15s; user-select:none; }
+.enc-toggle:hover { background:var(--surface2); color:var(--text); }
+.enc-toggle input[type=checkbox] { accent-color: var(--accent); width:14px; height:14px; cursor:pointer; }
+.enc-toggle.active { color: var(--success); }
+.enc-badge { font-size:10px; display:inline-flex; align-items:center; gap:2px; color:var(--success); opacity:0.85; margin-left:3px; }
+.enc-warning-bar { background:rgba(255,152,0,0.1); border:1px solid rgba(255,152,0,0.3); border-radius:6px; padding:6px 10px; font-size:11px; color:var(--warning); margin-bottom:6px; display:none; }
+
+/* ── Backup Modal ── */
+.backup-key-row { display: flex; gap: 6px; align-items: flex-start; margin-bottom: 10px; }
+.backup-key-box { flex: 1; background: var(--surface2); border: 1px solid var(--divider); border-radius: 6px; padding: 8px 10px; font-family: monospace; font-size: 11px; color: var(--text); word-break: break-all; line-height: 1.5; }
+.backup-warning { background: rgba(244,67,54,0.1); border: 1px solid rgba(244,67,54,0.4); border-radius: 8px; padding: 10px 12px; color: #ef9a9a; font-size: 12px; margin-bottom: 14px; line-height: 1.5; }
+
+/* ── Sidebar Nav Tabs ── */
+#snav { display:flex; border-bottom:1px solid var(--divider); flex-shrink:0; }
+.snav-tab { flex:1; padding:8px 4px; text-align:center; cursor:pointer; font-size:12px; color:var(--subtext); border:none; border-bottom:2px solid transparent; background:none; transition:all 0.15s; font-family:inherit; }
+.snav-tab.active { color:var(--accent); border-bottom-color:var(--accent); font-weight:600; }
+.snav-tab:hover:not(.active) { color:var(--text); background:var(--surface2); }
+
+/* ── Public List ── */
+#public-list { flex:1; overflow-y:auto; display:none; flex-direction:column; }
+#public-list.visible { display:flex; }
+.pub-info-bar { padding:9px 14px; background:rgba(255,152,0,0.06); border-bottom:1px solid var(--divider); font-size:11px; color:var(--subtext); line-height:1.5; flex-shrink:0; }
+.pub-room-card { padding:12px 16px; border-bottom:1px solid var(--divider); cursor:pointer; transition:background 0.1s; }
+.pub-room-card:hover { background:var(--surface2); }
+.pub-room-card.active { background:var(--accent-dim); }
+.pub-room-name { font-size:14px; font-weight:600; margin-bottom:3px; display:flex; align-items:center; gap:5px; flex-wrap:wrap; }
+.pub-room-desc { font-size:11px; color:var(--subtext); line-height:1.4; }
+.pub-tag { font-size:9px; padding:1px 5px; border-radius:8px; font-weight:700; white-space:nowrap; }
+.pub-tag.testnet { background:rgba(255,152,0,0.18); color:var(--warning); }
+.pub-tag.open { background:rgba(244,67,54,0.12); color:#ef9a9a; }
+.pub-connect-wrap { padding:12px 14px; }
+.pub-connect-btn { width:100%; padding:8px 14px; border-radius:8px; border:1px solid var(--accent); background:transparent; color:var(--accent); cursor:pointer; font-size:12px; transition:all 0.15s; font-family:inherit; }
+.pub-connect-btn:hover { background:var(--accent); color:white; }
+#pub-header-bar { padding:6px 14px; background:rgba(244,67,54,0.07); border-bottom:1px solid rgba(244,67,54,0.2); font-size:11px; color:#ef9a9a; display:none; line-height:1.4; flex-shrink:0; }
+#pub-header-bar.visible { display:block; }
+
+/* ── Onboarding Modal ── */
+.ob-step { display:none; }
+.ob-step.active { display:block; }
+.ob-cards { display:flex; gap:10px; margin:14px 0 4px; }
+.ob-card { flex:1; background:var(--surface); border:2px solid var(--divider); border-radius:10px; padding:16px 10px; cursor:pointer; transition:all 0.2s; text-align:center; }
+.ob-card:hover { border-color:var(--accent); background:rgba(82,136,193,0.06); }
+.ob-card-icon { font-size:26px; margin-bottom:7px; }
+.ob-card-title { font-size:13px; font-weight:700; margin-bottom:5px; color:var(--text); }
+.ob-card-desc { font-size:11px; color:var(--subtext); line-height:1.5; }
+.priv-section { margin-top:14px; padding-top:12px; border-top:1px solid var(--divider); }
+.priv-section-title { font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:0.6px; color:var(--subtext); margin-bottom:8px; }
+.priv-row { display:flex; gap:9px; padding:7px 0; border-bottom:1px solid var(--divider); font-size:12px; align-items:flex-start; }
+.priv-row:last-child { border-bottom:none; padding-bottom:0; }
+.priv-icon { font-size:14px; flex-shrink:0; width:20px; text-align:center; margin-top:2px; }
+.priv-body { flex:1; line-height:1.55; color:var(--subtext); }
+.priv-body strong { color:var(--text); }
+
+/* ── Public Info Modal Extras ── */
+.pi-row { display:flex;gap:10px;padding:9px 0;border-bottom:1px solid var(--divider);font-size:12px;align-items:flex-start; }
+.pi-row:last-child { border-bottom:none;padding-bottom:0; }
+.pi-icon { font-size:15px;flex-shrink:0;width:22px;text-align:center;margin-top:1px; }
+.pi-body { flex:1;line-height:1.6;color:var(--subtext); }
+.pi-body strong { color:var(--text); }
+.pi-note { background:rgba(255,152,0,0.08);border:1px solid rgba(255,152,0,0.25);border-radius:7px;padding:9px 11px;font-size:11px;color:var(--warning);line-height:1.5;margin-bottom:12px; }
+.pi-note strong { color:#ffb74d; }
+.pi-code { font-family:monospace;font-size:11px;background:var(--bg);padding:7px 10px;border-radius:5px;display:block;line-height:1.9;margin-top:4px;color:var(--accent); }
+.pub-own-card { background:rgba(82,136,193,0.06);border:1px solid rgba(82,136,193,0.2);border-radius:10px;padding:13px 14px;margin:10px 14px 0; }
+.pub-own-title { font-size:13px;font-weight:700;margin-bottom:5px;color:var(--text); }
+.pub-own-desc { font-size:11px;color:var(--subtext);line-height:1.5;margin-bottom:9px; }
+.pub-room-info-btn { background:none;border:none;color:var(--subtext);cursor:pointer;font-size:13px;padding:1px 5px;border-radius:4px;margin-left:2px;transition:color 0.15s;line-height:1; }
+.pub-room-info-btn:hover { color:var(--accent); }
+</style>
+</head>
+<body>
+
+<div id="app">
+
+  <!-- ── Sidebar ── -->
+  <div id="sidebar">
+
+    <div id="sidebar-header">
+      <div id="wallet-selector" onclick="toggleWalletDropdown()">
+        <div class="ws-name" id="ws-name">No wallet</div>
+        <div class="ws-pk" id="ws-pk">Click to add wallet ▾</div>
+      </div>
+      <button class="icon-btn" title="Debug Panel (transactions, fees, network)" onclick="toggleDebug()" style="font-size:15px;position:relative" id="dbg-btn">🔍</button>
+
+      <!-- Wallet Dropdown -->
+      <div id="wallet-dropdown" style="display:none"></div>
+    </div>
+
+    <!-- Setup Banner -->
+    <div id="setup-banner" style="display:none"></div>
+
+    <div id="sidebar-actions">
+      <button class="action-btn" onclick="showDmModal()">✉ New DM</button>
+      <button class="action-btn" onclick="showRoomModal()">👥 New Group</button>
+      <button class="action-btn" onclick="showJoinModal()">🔗 Join Room</button>
+      <button class="action-btn" onclick="openTemplateModal()">⚙ Settings</button>
+    </div>
+
+    <div id="snav">
+      <button class="snav-tab active" id="snav-chats" onclick="switchSidebarTab('chats')">💬 Chats</button>
+      <button class="snav-tab" id="snav-public" onclick="switchSidebarTab('public')">🌐 Public Chats</button>
+    </div>
+
+    <div id="conv-list">
+      <div class="empty-list">No conversations yet.<br>Start a DM or create a group.</div>
+    </div>
+
+    <!-- Public Chat List -->
+    <div id="public-list"></div>
+
+    <!-- Wallet HUD -->
+    <div id="wallet-hud">
+      <div class="hud-name" id="hud-name">—</div>
+      <div class="hud-row">
+        <span style="flex-shrink:0">PK:</span>
+        <span class="hud-mono" id="hud-pk" title="Click to copy full public key" onclick="hudCopy('hud-pk-full')">—</span>
+        <button class="hud-copy" onclick="hudCopy('hud-pk-full')" title="Copy public key">⧉</button>
+      </div>
+      <div class="hud-row">
+        <span style="flex-shrink:0">Addr:</span>
+        <span class="hud-mono" id="hud-addr" title="Click to copy full account address" onclick="hudCopy('hud-addr-full')">—</span>
+        <button class="hud-copy" onclick="hudCopy('hud-addr-full')" title="Copy account address">⧉</button>
+      </div>
+      <div class="hud-row">
+        <span style="flex-shrink:0">Balance:</span>
+        <span class="hud-balance" id="hud-balance">—</span>
+      </div>
+      <div class="hud-btns">
+        <button class="hud-btn" onclick="doRefreshBalance()" id="hud-refresh-btn">↺ Balance</button>
+        <button class="hud-btn" onclick="showBackupModal()">🔑 Backup</button>
+        <button class="hud-btn" onclick="doHudFaucet()">💧 Faucet</button>
+      </div>
+      <label class="enc-toggle" id="enc-toggle-label" title="Experimental: Enable end-to-end encrypted DMs (Ristretto ECDH + AES-256-GCM). Group chats remain plaintext.">
+        <input type="checkbox" id="enc-toggle" onchange="toggleEncryption(this.checked)">
+        <span id="enc-toggle-text">🔒 E2EE Encryption (experimental)</span>
+      </label>
+      <!-- Hidden full-value holders for copy -->
+      <span id="hud-pk-full" style="display:none"></span>
+      <span id="hud-addr-full" style="display:none"></span>
+    </div>
+
+  </div>
+
+  <!-- ── Chat Panel ── -->
+  <div id="chat-panel">
+
+    <div id="chat-header" style="display:none">
+      <div class="ch-avatar" id="ch-avatar"></div>
+      <div class="ch-info">
+        <div class="ch-name" id="ch-name"></div>
+        <div class="ch-sub" id="ch-sub"></div>
+      </div>
+      <div id="header-tools">
+        <button id="btn-set-name" class="btn-secondary" onclick="promptSetContactName()" style="display:none;font-size:12px;padding:5px 10px">✏️ Set Name</button>
+        <a class="learn-btn" href="/instructions" target="_blank">📖 Learn More</a>
+      </div>
+    </div>
+
+    <div id="welcome">
+      <div style="font-size:52px">🔐</div>
+      <h2>Tari Messenger</h2>
+      <p>On-chain messaging powered by the Tari Layer 2 network. Every message is a blockchain transaction signed with your private key.</p>
+      <div style="display:flex;gap:10px;margin-top:12px;flex-wrap:wrap;justify-content:center">
+        <button class="btn-primary" onclick="startDemo()" id="demo-btn" style="display:none">🧪 Try Demo (Ootle &amp; Minotari)</button>
+        <button class="btn-secondary" onclick="showModal('tutorial-modal')" style="font-size:13px;padding:9px 16px">📖 How it works</button>
+        <a class="learn-btn" href="/instructions" target="_blank">📄 Full Guide</a>
+      </div>
+    </div>
+
+    <div id="enc-warning-bar" class="enc-warning-bar">⚠ Encryption is enabled but group chats are always plaintext — messages in this room are not encrypted.</div>
+    <div id="pub-header-bar">🌐 <strong>Public channel</strong> — messages, sender/recipient keys, and timestamps are all visible on-chain to anyone with the contract address. <span style="color:var(--accent);cursor:pointer;text-decoration:underline" onclick="showModal('pubinfo-modal')">How it works ℹ</span></div>
+
+    <div id="messages-area" style="display:none"></div>
+
+    <div id="input-area" style="display:none">
+      <textarea id="msg-input" placeholder="Message..." rows="1"
+        oninput="autoResize(this)" onkeydown="handleKey(event)"></textarea>
+      <button id="send-btn" onclick="sendMessage()">➤</button>
+    </div>
+
+  </div>
+</div>
+
+<!-- ── Debug Panel ── -->
+<div id="debug-panel">
+  <header>
+    <span>🔍 Debug Panel</span>
+    <button class="icon-btn" onclick="toggleDebug()">✕</button>
+  </header>
+  <div class="debug-tabs">
+    <div class="debug-tab active" onclick="switchDbgTab(this,'dbg-tx')">📋 Transactions</div>
+    <div class="debug-tab" onclick="switchDbgTab(this,'dbg-net')">📊 Network</div>
+  </div>
+  <div class="debug-body" id="dbg-tx"></div>
+  <div class="debug-body" id="dbg-net" style="display:none"></div>
+</div>
+
+<!-- ── Wallet Modal ── -->
+<div class="modal-overlay" id="wallet-modal" style="display:none" onclick="if(event.target===this)hideModal('wallet-modal')">
+  <div class="modal" onclick="event.stopPropagation()">
+    <h2>Add Wallet</h2>
+    <div class="modal-tabs">
+      <div class="modal-tab active" onclick="switchTab(this,'wt-generate','wallet-tabs')">✨ Generate</div>
+      <div class="modal-tab" onclick="switchTab(this,'wt-hex','wallet-tabs')">🔑 Import Keys</div>
+      <div class="modal-tab" onclick="switchTab(this,'wt-phrase','wallet-tabs')">📝 Passphrase</div>
+      <div class="modal-tab" onclick="switchTab(this,'wt-mnemonic','wallet-tabs')">🌱 Seed Words</div>
+    </div>
+
+    <div id="wt-generate" class="tab-panel active" data-group="wallet-tabs">
+      <div class="form-group">
+        <label>Display Name</label>
+        <input class="form-input sans" id="gen-name" placeholder="e.g. Ootle" type="text">
+      </div>
+      <p class="form-note">Generates a fresh random wallet and funds it with 10 tTARI from the Esmeralda testnet faucet. Takes ~30-60 seconds.</p>
+      <div class="modal-actions">
+        <button class="btn-secondary" onclick="hideModal('wallet-modal')">Cancel</button>
+        <button class="btn-primary" id="gen-btn" onclick="doGenerate()">✨ Generate &amp; Fund</button>
+      </div>
+    </div>
+
+    <div id="wt-hex" class="tab-panel" data-group="wallet-tabs">
+      <div class="form-group">
+        <label>Display Name</label>
+        <input class="form-input sans" id="hex-name" placeholder="e.g. Ootle" type="text">
+      </div>
+      <div class="form-group">
+        <label>Account Secret Key (hex, 64 chars)</label>
+        <input class="form-input" id="hex-acc" placeholder="64 hex characters" type="text">
+      </div>
+      <div class="form-group">
+        <label>View Secret Key (hex, 64 chars)</label>
+        <input class="form-input" id="hex-view" placeholder="64 hex characters" type="text">
+      </div>
+      <p class="form-note">Import by private keys. Your wallet must already have tTARI. Use "Get Testnet Funds" in the wallet info if needed.</p>
+      <div class="modal-actions">
+        <button class="btn-secondary" onclick="hideModal('wallet-modal')">Cancel</button>
+        <button class="btn-primary" id="hex-btn" onclick="doImportHex()">Import</button>
+      </div>
+    </div>
+
+    <div id="wt-phrase" class="tab-panel" data-group="wallet-tabs">
+      <div class="form-group">
+        <label>Display Name</label>
+        <input class="form-input sans" id="pp-name" placeholder="e.g. Ootle" type="text">
+      </div>
+      <div class="form-group">
+        <label>Passphrase</label>
+        <input class="form-input sans" id="pp-phrase" placeholder="Any phrase you'll remember" type="password">
+      </div>
+      <p class="form-note">⚠ Derives wallet keys from your passphrase using SHA-256. The same passphrase always produces the same wallet. <strong>Not</strong> compatible with walletd seed words — uses a different derivation scheme. If the derived wallet has no tTARI, use "Get Testnet Funds" after importing.</p>
+      <div class="modal-actions">
+        <button class="btn-secondary" onclick="hideModal('wallet-modal')">Cancel</button>
+        <button class="btn-primary" id="pp-btn" onclick="doImportPassphrase()">Import</button>
+      </div>
+    </div>
+
+    <div id="wt-mnemonic" class="tab-panel" data-group="wallet-tabs">
+      <div class="form-group">
+        <label>Display Name</label>
+        <input class="form-input sans" id="mn-name" placeholder="e.g. Ootle" type="text">
+      </div>
+      <div class="form-group">
+        <label>Account Seed Words (24 words)</label>
+        <textarea class="form-input" id="mn-acc" placeholder="word1 word2 ... word24" rows="3" style="resize:vertical"></textarea>
+      </div>
+      <div class="form-group">
+        <label>View Seed Words (24 words)</label>
+        <textarea class="form-input" id="mn-view" placeholder="word1 word2 ... word24" rows="3" style="resize:vertical"></textarea>
+      </div>
+      <p class="form-note">These are the BIP-39 encoded versions of your private keys, exported from the Backup screen.</p>
+      <div class="modal-actions">
+        <button class="btn-secondary" onclick="hideModal('wallet-modal')">Cancel</button>
+        <button class="btn-primary" id="mn-btn" onclick="doImportMnemonic()">🌱 Import from Seeds</button>
+      </div>
+    </div>
+
+    <div class="modal-status" id="wallet-status"></div>
+  </div>
+</div>
+
+<!-- ── Template Modal ── -->
+<div class="modal-overlay" id="template-modal" style="display:none" onclick="if(event.target===this)hideModal('template-modal')">
+  <div class="modal" onclick="event.stopPropagation()">
+    <h2>⚙ Messaging Component</h2>
+
+    <!-- Share section — visible when Ready -->
+    <div id="tmpl-share-section" style="display:none;margin-bottom:16px">
+      <div style="background:rgba(82,136,193,0.1);border:1px solid rgba(82,136,193,0.3);border-radius:8px;padding:12px;margin-bottom:12px">
+        <div style="font-weight:700;font-size:13px;margin-bottom:8px;color:var(--accent)">✓ Component Active — Share with Others</div>
+        <p style="font-size:12px;color:var(--subtext);margin-bottom:10px;line-height:1.5">Share these addresses so others can join your chat component.</p>
+        <div class="form-group" style="margin-bottom:8px">
+          <label>Component Address</label>
+          <div style="display:flex;gap:6px;align-items:center">
+            <div class="form-input" id="share-component" style="font-size:11px;padding:7px 10px;word-break:break-all;line-height:1.4;cursor:text;user-select:all"></div>
+            <button class="hud-copy" style="font-size:14px;flex-shrink:0" onclick="copyText(el('share-component').textContent)" title="Copy component address">⧉</button>
+          </div>
+        </div>
+        <div class="form-group" style="margin-bottom:0">
+          <label>Template Address</label>
+          <div style="display:flex;gap:6px;align-items:center">
+            <div class="form-input" id="share-template" style="font-size:11px;padding:7px 10px;word-break:break-all;line-height:1.4;cursor:text;user-select:all"></div>
+            <button class="hud-copy" style="font-size:14px;flex-shrink:0" onclick="copyText(el('share-template').textContent)" title="Copy template address">⧉</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-tabs">
+      <div class="modal-tab active" onclick="switchTab(this,'tmpl-deploy','tmpl-tabs')">🚀 Deploy New</div>
+      <div class="modal-tab" onclick="switchTab(this,'tmpl-join','tmpl-tabs')">🔗 Join Existing</div>
+    </div>
+
+    <div id="tmpl-deploy" class="tab-panel active" data-group="tmpl-tabs">
+      <p style="font-size:13px;color:var(--subtext);margin-bottom:14px;line-height:1.6">
+        Publish it via the <strong>Wallet Web UI</strong> at
+        <code style="color:var(--accent);background:var(--surface);padding:1px 4px;border-radius:3px">http://127.0.0.1:5100</code>,
+        then paste the template address below. Or click <strong>Auto-Publish</strong>.
+      </p>
+      <div class="form-group">
+        <label>Template Address</label>
+        <input class="form-input" id="tmpl-addr" placeholder="template_abc123..." type="text">
+      </div>
+      <div class="modal-actions">
+        <button class="btn-secondary" onclick="hideModal('template-modal')">Cancel</button>
+        <button class="btn-secondary" id="autopub-btn" onclick="doAutopublish()">Auto-Publish WASM</button>
+        <button class="btn-primary" id="configure-btn" onclick="doConfigure()">Configure</button>
+      </div>
+    </div>
+
+    <div id="tmpl-join" class="tab-panel" data-group="tmpl-tabs">
+      <p style="font-size:13px;color:var(--subtext);margin-bottom:14px;line-height:1.6">
+        Join an existing messaging component. Ask the host to share their component and template addresses.
+      </p>
+      <div class="form-group">
+        <label>Component Address</label>
+        <input class="form-input" id="join-component-addr" placeholder="component_abc123..." type="text">
+      </div>
+      <div class="form-group">
+        <label>Template Address</label>
+        <input class="form-input" id="join-template-addr" placeholder="template_abc123..." type="text">
+      </div>
+      <div class="modal-actions">
+        <button class="btn-secondary" onclick="hideModal('template-modal')">Cancel</button>
+        <button class="btn-primary" id="join-component-btn" onclick="doJoinComponent()">Join</button>
+      </div>
+    </div>
+
+    <div class="modal-status" id="template-status"></div>
+  </div>
+</div>
+
+<!-- ── New DM Modal ── -->
+<div class="modal-overlay" id="dm-modal" style="display:none" onclick="if(event.target===this)hideModal('dm-modal')">
+  <div class="modal" onclick="event.stopPropagation()">
+    <h2>New Direct Message</h2>
+    <div class="form-group">
+      <label>Recipient Public Key (hex)</label>
+      <input class="form-input" id="dm-recipient" placeholder="64-hex Ristretto public key" type="text">
+      <p class="form-note">Ask the recipient to share their public key from the wallet selector (top-left).</p>
+    </div>
+    <div class="form-group">
+      <label>Nickname (optional)</label>
+      <input class="form-input sans" id="dm-nickname" placeholder="e.g. Minotari" type="text">
+    </div>
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="hideModal('dm-modal')">Cancel</button>
+      <button class="btn-primary" onclick="doOpenDm()">Start Chat</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── New Room Modal ── -->
+<div class="modal-overlay" id="room-modal" style="display:none" onclick="if(event.target===this)hideModal('room-modal')">
+  <div class="modal" onclick="event.stopPropagation()">
+    <h2>Create Group Room</h2>
+    <div class="form-group">
+      <label>Room ID (unique, no spaces)</label>
+      <input class="form-input" id="room-id-input" placeholder="e.g. general" type="text">
+      <p class="form-note">Stored on-chain. Share this ID with others so they can join with "Join Room".</p>
+    </div>
+    <div class="form-group">
+      <label>Display Name</label>
+      <input class="form-input sans" id="room-dname" placeholder="e.g. General Chat" type="text">
+    </div>
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="hideModal('room-modal')">Cancel</button>
+      <button class="btn-primary" id="room-create-btn" onclick="doCreateRoom()">Create Room</button>
+    </div>
+    <div class="modal-status" id="room-status"></div>
+  </div>
+</div>
+
+<!-- ── Join Room Modal ── -->
+<div class="modal-overlay" id="join-modal" style="display:none" onclick="if(event.target===this)hideModal('join-modal')">
+  <div class="modal" onclick="event.stopPropagation()">
+    <h2>Join Existing Room</h2>
+    <div class="form-group">
+      <label>Room ID</label>
+      <input class="form-input" id="join-id" placeholder="e.g. general" type="text">
+    </div>
+    <div class="form-group">
+      <label>Display Name (optional)</label>
+      <input class="form-input sans" id="join-dname" placeholder="e.g. General Chat" type="text">
+    </div>
+    <p class="form-note">No on-chain transaction needed to join. You can read and post to any room you know the ID of.</p>
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="hideModal('join-modal')">Cancel</button>
+      <button class="btn-primary" onclick="doJoinRoom()">Join</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Backup Modal ── -->
+<div class="modal-overlay" id="backup-modal" style="display:none" onclick="if(event.target===this)hideModal('backup-modal')">
+  <div class="modal" style="width:480px" onclick="event.stopPropagation()">
+    <h2>🔑 Wallet Backup</h2>
+    <div class="backup-warning">⚠ These are your private keys. Anyone with these keys can control your wallet. Store them safely and never share them.</div>
+    <div id="backup-content">
+      <div class="form-group">
+        <label>Display Name</label>
+        <div class="backup-key-box" id="bk-name" style="font-family:inherit"></div>
+      </div>
+      <div class="form-group">
+        <label>Public Key</label>
+        <div class="backup-key-row">
+          <div class="backup-key-box" id="bk-pk"></div>
+          <button class="hud-copy" style="font-size:15px;margin-top:2px" onclick="copyText(el('bk-pk').textContent)" title="Copy">⧉</button>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Account Address</label>
+        <div class="backup-key-row">
+          <div class="backup-key-box" id="bk-addr"></div>
+          <button class="hud-copy" style="font-size:15px;margin-top:2px" onclick="copyText(el('bk-addr').textContent)" title="Copy">⧉</button>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Account Secret Key (hex)</label>
+        <div class="backup-key-row">
+          <div class="backup-key-box" id="bk-acc-hex"></div>
+          <button class="hud-copy" style="font-size:15px;margin-top:2px" onclick="copyText(el('bk-acc-hex').textContent)" title="Copy">⧉</button>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>View Secret Key (hex)</label>
+        <div class="backup-key-row">
+          <div class="backup-key-box" id="bk-view-hex"></div>
+          <button class="hud-copy" style="font-size:15px;margin-top:2px" onclick="copyText(el('bk-view-hex').textContent)" title="Copy">⧉</button>
+        </div>
+      </div>
+      <div class="form-group" id="bk-acc-mn-group">
+        <label>Account Seed Words (BIP-39)</label>
+        <div class="backup-key-row">
+          <div class="backup-key-box" id="bk-acc-mn" style="font-family:inherit;line-height:1.6"></div>
+          <button class="hud-copy" style="font-size:15px;margin-top:2px" onclick="copyText(el('bk-acc-mn').textContent)" title="Copy">⧉</button>
+        </div>
+      </div>
+      <div class="form-group" id="bk-view-mn-group">
+        <label>View Seed Words (BIP-39)</label>
+        <div class="backup-key-row">
+          <div class="backup-key-box" id="bk-view-mn" style="font-family:inherit;line-height:1.6"></div>
+          <button class="hud-copy" style="font-size:15px;margin-top:2px" onclick="copyText(el('bk-view-mn').textContent)" title="Copy">⧉</button>
+        </div>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="hideModal('backup-modal')">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Onboarding Modal ── -->
+<div class="modal-overlay" id="onboarding-modal" style="display:none" onclick="if(event.target===this&&false)hideModal('onboarding-modal')">
+  <div class="modal" style="width:500px;max-height:92vh" onclick="event.stopPropagation()">
+
+    <div style="text-align:center;margin-bottom:16px">
+      <div style="font-size:36px;margin-bottom:6px">🔐</div>
+      <h2 style="font-size:19px;margin-bottom:5px">Welcome to Tari Messenger</h2>
+      <p style="font-size:12px;color:var(--subtext);line-height:1.5">Decentralized messaging on the Tari Layer 2 blockchain.<br>Every message is a signed transaction — no servers, no accounts.</p>
+    </div>
+
+    <!-- Step 1: Choose path -->
+    <div id="ob-step1" class="ob-step active">
+      <div class="ob-cards">
+        <div class="ob-card" onclick="chooseSimple()">
+          <div class="ob-card-icon">🌐</div>
+          <div class="ob-card-title">Quick Start</div>
+          <div class="ob-card-desc">Join the community test chat. Create a wallet and start messaging in under a minute.</div>
+        </div>
+        <div class="ob-card" onclick="chooseAdvanced()">
+          <div class="ob-card-icon">⚙</div>
+          <div class="ob-card-title">Advanced Setup</div>
+          <div class="ob-card-desc">Deploy your own private messaging contract. Share the address only with your contacts — no one else can see your messages.</div>
+        </div>
+      </div>
+
+      <div class="priv-section">
+        <div class="priv-section-title">What's stored on-chain — read before you start</div>
+        <div class="priv-row">
+          <div class="priv-icon">📡</div>
+          <div class="priv-body"><strong>Everything is public by default.</strong> Sender/recipient public keys, message content, and timestamps are stored on-chain and readable by anyone with the contract address.</div>
+        </div>
+        <div class="priv-row">
+          <div class="priv-icon">🔒</div>
+          <div class="priv-body"><strong>DM content can be end-to-end encrypted.</strong> Toggle E2EE in the wallet panel. Uses Ristretto ECDH + AES-256-GCM — only you and your recipient can read the content. Sender/recipient keys and timestamps remain public.</div>
+        </div>
+        <div class="priv-row">
+          <div class="priv-icon">👥</div>
+          <div class="priv-body"><strong>Group chats are always plaintext.</strong> ECDH encryption is peer-to-peer only — group rooms cannot be encrypted and are always fully visible on-chain.</div>
+        </div>
+        <div class="priv-row">
+          <div class="priv-icon">🔑</div>
+          <div class="priv-body"><strong>Your identity is your public key.</strong> No username or email — just a 64-character cryptographic key. Share it so others can DM you.</div>
+        </div>
+        <div class="priv-row">
+          <div class="priv-icon">🏗</div>
+          <div class="priv-body"><strong>Want more privacy?</strong> Use Advanced Setup to deploy your own contract. Share that address only with trusted contacts — it acts like a private channel.</div>
+        </div>
+      </div>
+      <div style="display:flex;justify-content:flex-end;margin-top:14px">
+        <button class="btn-secondary" style="font-size:12px;padding:7px 14px" onclick="dismissOnboarding()">Skip for now</button>
+      </div>
+    </div>
+
+    <!-- Step 2: Quick start confirm -->
+    <div id="ob-step2" class="ob-step">
+      <div style="background:rgba(82,136,193,0.1);border:1px solid rgba(82,136,193,0.3);border-radius:8px;padding:14px;margin-bottom:10px">
+        <div style="font-weight:700;font-size:14px;margin-bottom:6px">🌐 Joining the community test chat</div>
+        <p style="font-size:12px;color:var(--subtext);line-height:1.6">You'll be added to <strong style="color:var(--text)">Tari Messenger Test Chat</strong> — a community open room on the Esmeralda testnet. <strong style="color:var(--warning)">Not an official Tari channel</strong> — just a testing sandbox built alongside this app.</p>
+      </div>
+      <div style="background:rgba(255,152,0,0.08);border:1px solid rgba(255,152,0,0.2);border-radius:8px;padding:10px 12px;margin-bottom:12px;font-size:11px;color:var(--subtext);line-height:1.6">
+        <strong style="color:#ffb74d">⚠ Privacy heads-up:</strong> In the default contract, <strong style="color:var(--text)">all messages are public on-chain</strong> — content, sender/recipient keys, and timestamps are visible to anyone with the contract address. DMs can be encrypted (E2EE toggle in wallet panel), but group rooms like this one are always plaintext. <span style="color:var(--accent);cursor:pointer;text-decoration:underline" onclick="switchObStep(1);showModal('pubinfo-modal')">Learn more</span>
+      </div>
+      <p style="font-size:13px;color:var(--subtext);margin-bottom:14px;line-height:1.5">Next: create a wallet. We'll generate a fresh keypair and fund it from the testnet faucet (~30 seconds).</p>
+      <div style="display:flex;gap:8px;justify-content:flex-end">
+        <button class="btn-secondary" onclick="switchObStep(1)">← Back</button>
+        <button class="btn-primary" onclick="finishOnboarding()">Create Wallet →</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ── Tutorial Modal ── -->
+<div class="modal-overlay" id="tutorial-modal" style="display:none" onclick="if(event.target===this)hideModal('tutorial-modal')">
+  <div class="modal" style="width:520px" onclick="event.stopPropagation()">
+    <h2>📖 How Tari Messenger Works</h2>
+    <div class="modal-tabs">
+      <div class="modal-tab active" onclick="switchTab(this,'tut-start','tut')">🚀 Start</div>
+      <div class="modal-tab" onclick="switchTab(this,'tut-dm','tut')">✉ DMs</div>
+      <div class="modal-tab" onclick="switchTab(this,'tut-room','tut')">👥 Groups</div>
+      <div class="modal-tab" onclick="switchTab(this,'tut-chain','tut')">⛓ On-Chain</div>
+      <div class="modal-tab" onclick="switchTab(this,'tut-enc','tut')">🔒 Encryption</div>
+    </div>
+
+    <div id="tut-start" class="tab-panel active" data-group="tut">
+      <p style="color:var(--subtext);font-size:13px;line-height:1.7;margin-bottom:14px">Every message in this app is a real blockchain transaction on the Tari Layer 2 network. Your wallet's private key signs every message — proving it came from you.</p>
+      <div style="background:var(--surface);border-radius:8px;padding:14px;margin-bottom:12px">
+        <div style="font-weight:600;margin-bottom:8px;font-size:13px">Quick Start</div>
+        <div style="font-size:12px;color:var(--subtext);line-height:2">
+          1. <strong style="color:var(--text)">Add a wallet</strong> — click your name top-left → Add Wallet → Generate<br>
+          2. <strong style="color:var(--text)">Configure template</strong> — click the yellow banner → Auto-Publish WASM<br>
+          3. <strong style="color:var(--text)">Wait ~60s</strong> for the component to deploy<br>
+          4. <strong style="color:var(--text)">Start chatting</strong> — New DM or New Group
+        </div>
+      </div>
+      <div style="background:var(--surface);border-radius:8px;padding:14px">
+        <div style="font-weight:600;margin-bottom:8px;font-size:13px">🧪 Demo Mode</div>
+        <p style="font-size:12px;color:var(--subtext);line-height:1.6;margin-bottom:10px">Creates two wallets named Ootle and Minotari, funds them from the testnet faucet, and opens a DM conversation between them so you can test two-way messaging.</p>
+        <button class="btn-primary" style="font-size:12px;padding:7px 14px" onclick="hideModal('tutorial-modal');startDemo()">🧪 Start Demo Now</button>
+      </div>
+    </div>
+
+    <div id="tut-dm" class="tab-panel" data-group="tut">
+      <div style="font-size:13px;line-height:1.7;color:var(--subtext)">
+        <div style="background:var(--surface);border-radius:8px;padding:14px;margin-bottom:12px">
+          <div style="font-weight:600;color:var(--text);margin-bottom:6px">What is a Direct Message?</div>
+          A DM is stored on-chain in the messaging component with the <strong style="color:var(--accent)">sender's public key</strong> (set by the blockchain — can't be faked) and the <strong style="color:var(--accent)">recipient's public key</strong> (you provide). By default, DMs are plaintext. Enable <strong style="color:var(--success)">🔒 E2EE Encryption</strong> in the wallet info panel to encrypt them end-to-end using Ristretto ECDH + AES-256-GCM.
+        </div>
+        <div style="background:var(--surface);border-radius:8px;padding:14px;margin-bottom:12px">
+          <div style="font-weight:600;color:var(--text);margin-bottom:6px">How to send a DM</div>
+          1. Click <strong style="color:var(--text)">✉ New DM</strong> in the sidebar<br>
+          2. Paste the recipient's <strong style="color:var(--accent)">public key hex</strong> (64 chars) — they can find it in the wallet selector dropdown<br>
+          3. Optionally give them a nickname<br>
+          4. Type and hit Enter — message appears instantly (blockchain confirms in ~30-60s in background)
+        </div>
+        <div style="background:var(--surface);border-radius:8px;padding:14px">
+          <div style="font-weight:600;color:var(--text);margin-bottom:6px">What happens on-chain</div>
+          <code style="font-size:11px;background:var(--bg);padding:6px 8px;border-radius:4px;display:block;line-height:1.8">
+            component.send_dm(to_pubkey, "hello")<br>
+            from = CallerContext::signer_public_key() // can't spoof<br>
+            fee: 2,000 µTARI from your account
+          </code>
+        </div>
+      </div>
+    </div>
+
+    <div id="tut-room" class="tab-panel" data-group="tut">
+      <div style="font-size:13px;line-height:1.7;color:var(--subtext)">
+        <div style="background:var(--surface);border-radius:8px;padding:14px;margin-bottom:12px">
+          <div style="font-weight:600;color:var(--text);margin-bottom:6px">What is a Group Room?</div>
+          A room is created on-chain with a unique <strong style="color:var(--accent)">room_id</strong> (like "general"). Anyone who knows the room_id can post to it — no invite needed. All messages are public. The creator pays 2,000 µTARI to create it; posters pay 2,000 µTARI per post.
+        </div>
+        <div style="background:var(--surface);border-radius:8px;padding:14px;margin-bottom:12px">
+          <div style="font-weight:600;color:var(--text);margin-bottom:6px">Create a room</div>
+          1. Click <strong style="color:var(--text)">👥 New Group</strong><br>
+          2. Enter a unique <strong style="color:var(--accent)">Room ID</strong> (no spaces, e.g. <code>general</code>)<br>
+          3. Enter a display name (e.g. <code>General Chat</code>)<br>
+          4. Hit Create — transaction runs in background (~30-60s)
+        </div>
+        <div style="background:var(--surface);border-radius:8px;padding:14px">
+          <div style="font-weight:600;color:var(--text);margin-bottom:6px">Join an existing room</div>
+          1. Click <strong style="color:var(--text)">🔗 Join Room</strong><br>
+          2. Enter the room_id someone shared with you<br>
+          3. No transaction needed — joining is just local bookkeeping<br>
+          4. You can post immediately once joined
+        </div>
+      </div>
+    </div>
+
+    <div id="tut-chain" class="tab-panel" data-group="tut">
+      <div style="font-size:13px;line-height:1.7;color:var(--subtext)">
+        <div style="background:var(--surface);border-radius:8px;padding:14px;margin-bottom:12px">
+          <div style="font-weight:600;color:var(--text);margin-bottom:6px">Why does sending take ~30-60 seconds?</div>
+          The message is submitted as a signed transaction to the Esmeralda testnet indexer. Validators on the network confirm it, execute the WASM smart contract, and commit the new state. This takes 1-3 block times.<br><br>
+          <strong style="color:var(--text)">The UI shows the message instantly</strong> (from local cache) while the blockchain confirms in the background. Check the 🔍 Debug panel to see when it confirms.
+        </div>
+        <div style="background:var(--surface);border-radius:8px;padding:14px;margin-bottom:12px">
+          <div style="font-weight:600;color:var(--text);margin-bottom:6px">Your identity on-chain</div>
+          Your identity is your <strong style="color:var(--accent)">Ristretto public key</strong> — a 32-byte elliptic curve point, shown as 64 hex characters. There are no usernames or accounts — just cryptographic keys. The blockchain itself verifies that the sender signed the transaction.
+        </div>
+        <div style="background:var(--surface);border-radius:8px;padding:14px">
+          <div style="font-weight:600;color:var(--text);margin-bottom:6px">Are messages private?</div>
+          <strong style="color:var(--warning)">Partially.</strong> With <strong style="color:var(--success)">E2EE enabled</strong> (🔒 toggle in the wallet panel), DMs are encrypted with AES-256-GCM before being stored on-chain. Group chat messages are always plaintext. Without E2EE, all messages are stored as plain text and readable by anyone with the component address.
+        </div>
+      </div>
+    </div>
+
+    <div id="tut-enc" class="tab-panel" data-group="tut">
+      <div style="font-size:13px;line-height:1.7;color:var(--subtext)">
+        <div style="background:var(--surface);border-radius:8px;padding:14px;margin-bottom:12px">
+          <div style="font-weight:600;color:var(--text);margin-bottom:6px">🔒 Experimental E2EE Encryption</div>
+          When enabled, all new DMs are encrypted before being stored on-chain. Even though the ciphertext is on a public blockchain, only the sender and recipient can decrypt it.
+        </div>
+        <div style="background:var(--surface);border-radius:8px;padding:14px;margin-bottom:12px">
+          <div style="font-weight:600;color:var(--text);margin-bottom:6px">How it works</div>
+          <div style="font-size:12px;line-height:1.9">
+            <strong style="color:var(--accent)">1. ECDH Key Agreement</strong><br>
+            &nbsp;&nbsp;shared_point = recipient_pubkey × sender_secretkey<br>
+            &nbsp;&nbsp;(Ristretto255 elliptic curve — same math as the wallet keys)<br>
+            <strong style="color:var(--accent)">2. Key Derivation</strong><br>
+            &nbsp;&nbsp;HKDF-SHA256 over the shared point → 256-bit symmetric key<br>
+            &nbsp;&nbsp;Sorted public keys used as info — ensures sender &amp; recipient derive the same key<br>
+            <strong style="color:var(--accent)">3. Encryption</strong><br>
+            &nbsp;&nbsp;AES-256-GCM with a random 12-byte nonce per message<br>
+            &nbsp;&nbsp;Wire format: <code style="color:var(--accent)">ENC1:&lt;hex(nonce||ciphertext)&gt;</code>
+          </div>
+        </div>
+        <div style="background:var(--surface);border-radius:8px;padding:14px;margin-bottom:12px">
+          <div style="font-weight:600;color:var(--text);margin-bottom:6px">Limitations</div>
+          <div style="font-size:12px;line-height:1.9;color:var(--subtext)">
+            ⚠ <strong style="color:var(--warning)">Group chats are always plaintext</strong> — ECDH requires exactly two parties, so it can't be used for groups.<br>
+            ⚠ <strong style="color:var(--warning)">Both parties must be on the same app instance</strong> (or share state files) to decrypt each other's messages.<br>
+            ⚠ <strong style="color:var(--warning)">Metadata is not hidden</strong> — the sender's public key and recipient's public key are always visible on-chain.<br>
+            ⚠ <strong style="color:var(--warning)">Old messages stay encrypted</strong> — switching encryption off doesn't re-encrypt old messages.
+          </div>
+        </div>
+        <div style="background:var(--surface);border-radius:8px;padding:14px">
+          <div style="font-weight:600;color:var(--text);margin-bottom:6px">Enable It</div>
+          In the wallet info panel (bottom-left), toggle <strong style="color:var(--success)">🔒 E2EE Encryption (experimental)</strong>. New DMs will show a lock icon 🔒 when successfully encrypted and decrypted.
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-actions" style="margin-top:16px">
+      <button class="btn-secondary" onclick="hideModal('tutorial-modal')">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Public Chats Info Modal ── -->
+<div class="modal-overlay" id="pubinfo-modal" style="display:none" onclick="if(event.target===this)hideModal('pubinfo-modal')">
+  <div class="modal" style="width:530px;max-height:92vh" onclick="event.stopPropagation()">
+    <h2>🌐 Public Chats — How It Works</h2>
+    <div class="modal-tabs">
+      <div class="modal-tab active" onclick="switchTab(this,'pubi-about','pubi')">🏠 About</div>
+      <div class="modal-tab" onclick="switchTab(this,'pubi-privacy','pubi')">👁 Privacy</div>
+      <div class="modal-tab" onclick="switchTab(this,'pubi-enc','pubi')">🔒 Encryption</div>
+      <div class="modal-tab" onclick="switchTab(this,'pubi-own','pubi')">🏗 Your Own</div>
+    </div>
+
+    <div id="pubi-about" class="tab-panel active" data-group="pubi">
+      <div class="pi-note">
+        <strong>⚠ Community app — not official.</strong> Tari Messenger was built by a community developer as a demo of what's possible on Tari Ootle. It is <strong>not</strong> an official Tari protocol product or developer channel. The "Tari Messenger Test Chat" is simply a testing ground to explore on-chain messaging.
+      </div>
+      <div class="pi-row">
+        <div class="pi-icon">🔐</div>
+        <div class="pi-body"><strong>What is this app?</strong> A WhatsApp-style messenger where every message is a real signed transaction on the Tari Layer 2 blockchain (Esmeralda testnet). Your wallet's private key proves every message came from you — no servers, no accounts.</div>
+      </div>
+      <div class="pi-row">
+        <div class="pi-icon">🌐</div>
+        <div class="pi-body"><strong>Tari Messenger Test Chat</strong> is a shared open room on the testnet. Anyone who runs this app and uses the default contract can post and read messages here. It's a sandbox — expect experiments, tests, and noise.</div>
+      </div>
+      <div class="pi-row">
+        <div class="pi-icon">🧪</div>
+        <div class="pi-body"><strong>Esmeralda testnet only.</strong> This is a test network — balances and messages have no real-world value. Funds come from a free faucet. Use it freely to experiment with on-chain messaging.</div>
+      </div>
+      <div class="pi-row">
+        <div class="pi-icon">♾</div>
+        <div class="pi-body"><strong>Messages are permanent.</strong> Once a transaction is confirmed on-chain, it cannot be deleted or modified. Think before you post.</div>
+      </div>
+    </div>
+
+    <div id="pubi-privacy" class="tab-panel" data-group="pubi">
+      <p style="font-size:13px;color:var(--subtext);margin-bottom:12px;line-height:1.6">Everything in a public room — and by default in DMs — is stored on-chain and visible to anyone who has the contract address.</p>
+      <div class="pi-row">
+        <div class="pi-icon">📡</div>
+        <div class="pi-body"><strong>Always public (cannot be hidden):</strong>
+          <br>• Sender public key (your on-chain identity)
+          <br>• Recipient public key (for DMs) or room ID (for groups)
+          <br>• Timestamp of every message
+          <br>• Transaction fee paid
+        </div>
+      </div>
+      <div class="pi-row">
+        <div class="pi-icon">💬</div>
+        <div class="pi-body"><strong>Message content</strong> is public by default in group rooms. In DMs, content can be end-to-end encrypted — but only if both parties have E2EE enabled in the wallet panel.</div>
+      </div>
+      <div class="pi-row">
+        <div class="pi-icon">👥</div>
+        <div class="pi-body"><strong>Group rooms are always fully public.</strong> Encryption can't be used for groups — the math (ECDH) only works between exactly two parties. Every word in a group room is stored as plaintext on-chain.</div>
+      </div>
+      <div class="pi-row">
+        <div class="pi-icon">🔑</div>
+        <div class="pi-body"><strong>Your identity is your public key.</strong> No usernames or email — just a 64-character hex key. If someone has it, they can see all your on-chain messages and DM you.</div>
+      </div>
+      <div class="pi-row">
+        <div class="pi-icon">📋</div>
+        <div class="pi-body"><strong>Contract address = privacy boundary.</strong> Messages are only visible to users on the same contract. Use Advanced Setup to create a private contract — share that address only with people you trust.</div>
+      </div>
+    </div>
+
+    <div id="pubi-enc" class="tab-panel" data-group="pubi">
+      <p style="font-size:13px;color:var(--subtext);margin-bottom:12px;line-height:1.6">DMs can be end-to-end encrypted so only you and your recipient can read the content — even though ciphertext is stored on a public blockchain.</p>
+      <div class="pi-row">
+        <div class="pi-icon">🤝</div>
+        <div class="pi-body"><strong>Step 1 — ECDH Key Agreement</strong><br>Your wallet's private key and your contact's public key are multiplied together on the Ristretto255 elliptic curve:<span class="pi-code">shared_point = recipient_pubkey × sender_secretkey</span>Both sides compute the same shared point — without ever exchanging private keys.</div>
+      </div>
+      <div class="pi-row">
+        <div class="pi-icon">🔑</div>
+        <div class="pi-body"><strong>Step 2 — Key Derivation</strong><br>The shared point is fed into HKDF-SHA256 to derive a 256-bit symmetric key:<span class="pi-code">key = HKDF-SHA256(shared_point, info=sorted_pubkeys)</span>Sorted public keys in the info field ensure sender and recipient always derive the same key regardless of who sends first.</div>
+      </div>
+      <div class="pi-row">
+        <div class="pi-icon">🔒</div>
+        <div class="pi-body"><strong>Step 3 — Encrypt</strong><br>AES-256-GCM with a fresh random 12-byte nonce per message:<span class="pi-code">wire: ENC1:&lt;hex(nonce || ciphertext)&gt;</span>The ENC1 prefix tells the receiver it needs to decrypt rather than display raw text.</div>
+      </div>
+      <div class="pi-row">
+        <div class="pi-icon">⚠</div>
+        <div class="pi-body"><strong>Limitations:</strong> Even with E2EE, metadata (sender/recipient keys, timestamps) is always visible. Group chats can never be encrypted. Both parties must be on this app to decrypt. Toggle E2EE in the wallet info panel (bottom-left of sidebar).</div>
+      </div>
+    </div>
+
+    <div id="pubi-own" class="tab-panel" data-group="pubi">
+      <p style="font-size:13px;color:var(--subtext);margin-bottom:12px;line-height:1.6">Want more privacy? Deploy your own messaging contract. Only people you give the address to can read your messages.</p>
+      <div class="pi-row">
+        <div class="pi-icon">🏗</div>
+        <div class="pi-body"><strong>How it works:</strong> A "messaging contract" is a Rust WASM smart contract deployed to the Tari Layer 2 network. It stores messages on-chain. You deploy it, you get its address, and only users who have that address can post to or read from it.</div>
+      </div>
+      <div class="pi-row">
+        <div class="pi-icon">🚀</div>
+        <div class="pi-body"><strong>Simple path — Auto-Publish:</strong> Click <strong style="color:var(--text)">⚙ Settings</strong> in the sidebar, then <strong style="color:var(--text)">Auto-Publish WASM</strong>. The app compiles and deploys the contract automatically. Takes ~60 seconds and costs a small testnet fee.</div>
+      </div>
+      <div class="pi-row">
+        <div class="pi-icon">🔗</div>
+        <div class="pi-body"><strong>Share with contacts:</strong> After deployment, open ⚙ Settings to see your component address. Share it with anyone you want to chat with — they paste it into "Join Existing" on their end.</div>
+      </div>
+      <div class="pi-row">
+        <div class="pi-icon">⚙</div>
+        <div class="pi-body"><strong>Advanced path — custom template:</strong> The Rust source is in <code style="color:var(--accent)">messaging_template/src/lib.rs</code>. You can modify the contract logic, add new methods, or tweak access rules — then publish your customized version via the Tari Wallet Web UI at <code style="color:var(--accent)">http://127.0.0.1:5100</code>.</div>
+      </div>
+      <div style="margin-top:12px">
+        <button class="btn-primary" style="width:100%;font-size:13px" onclick="hideModal('pubinfo-modal');openTemplateModal()">⚙ Configure / Deploy Your Contract →</button>
+      </div>
+    </div>
+
+    <div class="modal-actions" style="margin-top:16px">
+      <button class="btn-secondary" onclick="hideModal('pubinfo-modal')">Close</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── App State ──────────────────────────────────────────────────────────────────
+const S = {
+  status: null,
+  wallets: [],         // [{display_name, public_key_hex, account_address}]
+  activeWallet: null,  // pubkey hex string
+  rooms: [],           // [{room_id, display_name, creator_pk}]
+  openDms: {},         // {partnerPk: [{from_pk,to_pk,content,timestamp,encrypted}]}
+  nicknames: {},       // {pubkey: nickname string}
+  activeConv: null,    // {type:'dm'|'room', id:string}
+  debugOpen: false,
+  activeDbgTab: 'dbg-tx',
+  ddOpen: false,
+  pollTimer: null,
+  encryptionEnabled: false,  // E2EE toggle (experimental)
+  sidebarTab: 'chats',       // 'chats' or 'public'
+  publicConfig: null,        // from /api/public-config
+};
+
+// ── Utils ──────────────────────────────────────────────────────────────────────
+const el = id => document.getElementById(id);
+const esc = s => String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+function shortPk(pk) {
+  if (!pk || pk.length < 16) return pk || '?';
+  return pk.slice(0,8) + '…' + pk.slice(-6);
+}
+
+function nameFor(pk) {
+  if (!pk) return 'Unknown';
+  const w = S.wallets.find(w => w.public_key_hex === pk);
+  return w ? w.display_name : (S.nicknames[pk] || shortPk(pk));
+}
+
+function timeFmt(ts) {
+  if (!ts) return '';
+  return new Date(ts * 1000).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+}
+
+function setModalStatus(id, msg, type='info') {
+  const el2 = el(id);
+  if (!el2) return;
+  el2.className = `modal-status ${type}`;
+  el2.style.display = 'block';
+  el2.textContent = msg;
+}
+
+async function api(method, path, body) {
+  const opts = {method, headers:{'Content-Type':'application/json'}};
+  if (body) opts.body = JSON.stringify(body);
+  const r = await fetch(path, opts);
+  const data = await r.json();
+  if (!r.ok) throw new Error(data.error || `HTTP ${r.status}`);
+  return data;
+}
+
+// ── Tab System ────────────────────────────────────────────────────────────────
+function switchTab(tabEl, targetId, group) {
+  document.querySelectorAll(`.modal-tab`).forEach(t => {
+    const sib = t.parentElement;
+    if (sib === tabEl.parentElement) t.classList.remove('active');
+  });
+  tabEl.classList.add('active');
+  document.querySelectorAll(`[data-group="${group}"]`).forEach(p => p.classList.remove('active'));
+  el(targetId)?.classList.add('active');
+}
+
+function switchDbgTab(tabEl, targetId) {
+  document.querySelectorAll('.debug-tab').forEach(t => t.classList.remove('active'));
+  tabEl.classList.add('active');
+  ['dbg-tx','dbg-net'].forEach(id => {
+    const e = el(id);
+    if (e) e.style.display = id === targetId ? 'block' : 'none';
+  });
+  S.activeDbgTab = targetId;
+  loadDebugData();
+}
+
+// ── Modal Helpers ──────────────────────────────────────────────────────────────
+function hideModal(id) { el(id).style.display = 'none'; }
+function showModal(id) { el(id).style.display = 'flex'; }
+
+function showDmModal() {
+  if (!S.activeWallet) { showModal('wallet-modal'); return; }
+  showModal('dm-modal');
+}
+function showRoomModal() {
+  if (!S.activeWallet) { showModal('wallet-modal'); return; }
+  showModal('room-modal');
+}
+function showJoinModal() { showModal('join-modal'); }
+
+// ── Init & Polling ─────────────────────────────────────────────────────────────
+async function init() {
+  await reload();
+  S.pollTimer = setInterval(async () => {
+    await reload();
+    if (S.debugOpen) await loadDebugData();
+  }, 3500);
+  showOnboardingIfNeeded();
+}
+
+async function toggleEncryption(enabled) {
+  try {
+    const d = await api('POST', '/api/settings', {encryption_enabled: enabled});
+    S.encryptionEnabled = d.encryption_enabled;
+    updateEncToggleUI();
+    // Refresh messages to show/hide lock badges
+    if (S.activeConv?.type === 'dm') await loadMessages();
+  } catch(e) {
+    console.warn('toggleEncryption error:', e);
+    // Revert checkbox on error
+    el('enc-toggle').checked = S.encryptionEnabled;
+  }
+}
+
+function updateEncToggleUI() {
+  const cb = el('enc-toggle');
+  const label = el('enc-toggle-label');
+  if (cb) cb.checked = S.encryptionEnabled;
+  if (label) label.className = 'enc-toggle' + (S.encryptionEnabled ? ' active' : '');
+  // Show/hide group chat warning
+  const isRoom = S.activeConv?.type === 'room';
+  const wb = el('enc-warning-bar');
+  if (wb) wb.style.display = (S.encryptionEnabled && isRoom) ? 'block' : 'none';
+}
+
+async function reload() {
+  try {
+    const [statusData, walletsData, roomsData, contactsData, settingsData, pubConfigData] = await Promise.all([
+      fetch('/api/status').then(r=>r.json()),
+      fetch('/api/wallets').then(r=>r.json()),
+      fetch('/api/rooms').then(r=>r.json()),
+      fetch('/api/contacts').then(r=>r.json()),
+      fetch('/api/settings').then(r=>r.json()),
+      fetch('/api/public-config').then(r=>r.json()),
+    ]);
+    S.publicConfig = pubConfigData;
+    S.encryptionEnabled = settingsData.encryption_enabled || false;
+    updateEncToggleUI();
+    S.status = statusData;
+    S.wallets = walletsData.wallets || [];
+    S.rooms = roomsData.rooms || [];
+    S.nicknames = contactsData.contacts || {};
+    // S.encryptionEnabled already set above
+
+    const prevWallet = S.activeWallet;
+    if (!S.activeWallet && S.wallets.length) {
+      S.activeWallet = S.wallets[0].public_key_hex;
+    }
+
+    renderSetupBanner();
+    renderWalletSelector();
+    updateHud();
+
+    // If wallet just became active for the first time, load inbox + balance
+    if (!prevWallet && S.activeWallet) {
+      await loadInbox();
+      doRefreshBalance();
+    } else {
+      // On every poll, check for new incoming DMs by refreshing the inbox
+      await loadInbox();
+    }
+
+    renderConvList();
+    if (S.activeConv) await loadMessages();
+    if (S.sidebarTab === 'public') renderPublicList();
+  } catch(e) {
+    console.warn('reload error:', e);
+  }
+}
+
+// Load all conversation partners for the active wallet from the server
+async function loadInbox() {
+  if (!S.activeWallet) return;
+  try {
+    const d = await fetch(`/api/dm/inbox?wallet_pk=${S.activeWallet}`).then(r=>r.json());
+    for (const conv of (d.conversations || [])) {
+      // Add partner slot if not already open (don't overwrite existing message cache)
+      if (!S.openDms[conv.partner_pk]) {
+        S.openDms[conv.partner_pk] = [];
+      }
+    }
+    await refreshOpenDms();
+    renderConvList();
+  } catch(e) { console.warn('loadInbox error:', e); }
+}
+
+async function refreshOpenDms() {
+  if (!S.activeWallet) return;
+  for (const pk of Object.keys(S.openDms)) {
+    try {
+      const d = await fetch(`/api/dm/messages?user_a=${S.activeWallet}&user_b=${pk}`).then(r=>r.json());
+      S.openDms[pk] = d.messages || [];
+    } catch {}
+  }
+}
+
+// ── Setup Banner ───────────────────────────────────────────────────────────────
+function renderSetupBanner() {
+  const banner = el('setup-banner');
+  const st = S.status?.setup_status;
+  if (!st || st === 'Ready') {
+    banner.style.display = 'none';
+    const db = el('demo-btn');
+    if (db) db.style.display = 'none';
+    return;
+  }
+
+  banner.style.display = 'flex';
+  const demoBtn = el('demo-btn');
+  if (st === 'NeedsWallet') {
+    if (demoBtn) demoBtn.style.display = 'inline-flex';
+    banner.className = 'needs-wallet';
+    banner.innerHTML = `<span class="sb-icon">👋</span>
+      <span class="sb-text">Welcome! Create or import a wallet to get started.</span>
+      <button class="sb-btn" onclick="showModal('wallet-modal')">Add Wallet</button>`;
+  } else {
+    if (demoBtn) demoBtn.style.display = 'none';
+  }
+  if (st === 'NeedsTemplate') {
+    banner.className = 'needs-template';
+    banner.innerHTML = `<span class="sb-icon">📋</span>
+      <span class="sb-text">Publish the messaging template to enable on-chain messaging.</span>
+      <button class="sb-btn" onclick="showModal('template-modal')">Configure</button>`;
+  } else if (st === 'DeployingComponent') {
+    banner.className = 'deploying';
+    banner.innerHTML = `<span class="sb-icon"><span class="spinner"></span></span>
+      <span class="sb-text">Deploying messaging component on-chain… (~30–60s)</span>`;
+  } else if (st && typeof st === 'object' && st.Error) {
+    banner.className = 'error-state';
+    banner.innerHTML = `<span class="sb-icon">⚠</span>
+      <span class="sb-text">Error: ${esc(st.Error)}</span>
+      <button class="sb-btn" onclick="showModal('template-modal')">Retry</button>`;
+  }
+}
+
+// ── Wallet Selector & Dropdown ─────────────────────────────────────────────────
+function renderWalletSelector() {
+  const w = S.wallets.find(w => w.public_key_hex === S.activeWallet);
+  if (w) {
+    el('ws-name').textContent = w.display_name;
+    el('ws-pk').textContent = shortPk(w.public_key_hex) + ' ▾';
+  } else {
+    el('ws-name').textContent = S.wallets.length ? 'Select wallet' : 'No wallet';
+    el('ws-pk').textContent = 'Click to ' + (S.wallets.length ? 'switch ▾' : 'add wallet ▾');
+  }
+}
+
+function toggleWalletDropdown() {
+  S.ddOpen = !S.ddOpen;
+  const dd = el('wallet-dropdown');
+  if (S.ddOpen) {
+    renderWalletDropdown();
+    dd.style.display = 'block';
+  } else {
+    dd.style.display = 'none';
+  }
+}
+
+function renderWalletDropdown() {
+  let html = '';
+  for (const w of S.wallets) {
+    const active = w.public_key_hex === S.activeWallet;
+    html += `<div class="wd-item${active?' wd-active':''}" onclick="selectWallet('${w.public_key_hex}')">
+      <div class="wd-dot">${esc(w.display_name[0]?.toUpperCase()||'?')}</div>
+      <div>
+        <div class="wd-name">${esc(w.display_name)}${active?' ✓':''}</div>
+        <div class="wd-pk">${esc(shortPk(w.public_key_hex))}</div>
+      </div>
+    </div>`;
+  }
+  html += `<div class="wd-add" onclick="S.ddOpen=false;el('wallet-dropdown').style.display='none';showModal('wallet-modal')">➕ Add wallet</div>`;
+  el('wallet-dropdown').innerHTML = html;
+}
+
+function selectWallet(pk) {
+  S.activeWallet = pk;
+  S.ddOpen = false;
+  el('wallet-dropdown').style.display = 'none';
+  // Clear previous wallet's conversations — each wallet has its own inbox
+  S.openDms = {};
+  S.activeConv = null;
+  el('chat-header').style.display = 'none';
+  el('messages-area').style.display = 'none';
+  el('input-area').style.display = 'none';
+  el('welcome').style.display = 'flex';
+  renderWalletSelector();
+  updateHud();
+  loadInbox();
+  // Auto-fetch balance when wallet is selected
+  doRefreshBalance();
+}
+
+document.addEventListener('click', e => {
+  if (S.ddOpen && !e.target.closest('#wallet-selector') && !e.target.closest('#wallet-dropdown')) {
+    S.ddOpen = false;
+    el('wallet-dropdown').style.display = 'none';
+  }
+});
+
+// ── Conversation List ──────────────────────────────────────────────────────────
+function renderConvList() {
+  const list = el('conv-list');
+  let html = '';
+
+  // DMs — sort by most recent message
+  const dmEntries = Object.entries(S.openDms).sort((a,b) => {
+    const ta = a[1].at?.(-1)?.timestamp || 0;
+    const tb = b[1].at?.(-1)?.timestamp || 0;
+    return tb - ta;
+  });
+  for (const [pk, msgs] of dmEntries) {
+    const name = nameFor(pk);
+    const last = msgs.at?.(-1);
+    const preview = last?.content?.slice(0,45) || 'No messages yet';
+    const time = last ? timeFmt(last.timestamp) : '';
+    const isActive = S.activeConv?.type === 'dm' && S.activeConv?.id === pk;
+    // Show unread dot if last message was FROM the partner (not us) and conv isn't open
+    const hasUnread = !isActive && last && last.from_pk !== S.activeWallet;
+    html += `<div class="conv-item${isActive?' active':''}" onclick="openDm('${pk}')">
+      <div class="conv-avatar dm-av" style="position:relative">
+        ${esc(name[0]?.toUpperCase()||'?')}
+        ${hasUnread ? '<span style="position:absolute;top:0;right:0;width:10px;height:10px;background:var(--success);border-radius:50%;border:2px solid var(--sidebar)"></span>' : ''}
+      </div>
+      <div class="conv-info">
+        <div class="conv-name" style="${hasUnread?'font-weight:700;color:var(--text)':''}">${esc(name)}</div>
+        <div class="conv-preview" style="${hasUnread?'color:var(--text)':''}">${esc(preview)}</div>
+      </div>
+      <div class="conv-time">${time}</div>
+    </div>`;
+  }
+
+  // Rooms
+  for (const room of S.rooms) {
+    const isActive = S.activeConv?.type === 'room' && S.activeConv?.id === room.room_id;
+    html += `<div class="conv-item${isActive?' active':''}" onclick="openRoom('${room.room_id}')">
+      <div class="conv-avatar room-av">#</div>
+      <div class="conv-info">
+        <div class="conv-name">${esc(room.display_name)}</div>
+        <div class="conv-preview">#${esc(room.room_id)}</div>
+      </div>
+    </div>`;
+  }
+
+  list.innerHTML = html || `<div class="empty-list">No conversations yet.<br>Use the buttons above to start a DM,<br>create, or join a group room.</div>`;
+}
+
+// ── Open Conversations ─────────────────────────────────────────────────────────
+async function openDm(partnerPk) {
+  S.activeConv = {type:'dm', id: partnerPk, isPublic: false};
+  el('pub-header-bar')?.classList.remove('visible');
+  if (!S.openDms[partnerPk]) S.openDms[partnerPk] = [];
+
+  const name = nameFor(partnerPk);
+  el('chat-header').style.display = 'flex';
+  el('ch-avatar').textContent = name[0]?.toUpperCase() || '?';
+  el('ch-avatar').style.background = 'var(--accent)';
+  el('ch-name').textContent = name;
+  el('ch-sub').textContent = partnerPk;
+  el('welcome').style.display = 'none';
+  el('messages-area').style.display = 'flex';
+  el('input-area').style.display = 'flex';
+
+  // Show "Set Name" button for contacts that aren't local wallets
+  const isLocal = S.wallets.some(w => w.public_key_hex === partnerPk);
+  el('btn-set-name').style.display = isLocal ? 'none' : 'inline-block';
+  updateEncToggleUI();
+
+  renderConvList();
+  await loadMessages();
+}
+
+async function promptSetContactName() {
+  const pk = S.activeConv?.type === 'dm' ? S.activeConv.id : null;
+  if (!pk) return;
+  const current = S.nicknames[pk] || '';
+  const name = prompt(`Set a display name for this contact:\n${shortPk(pk)}`, current);
+  if (name === null) return; // cancelled
+  await api('POST', '/api/contacts/set', { public_key_hex: pk, display_name: name.trim() });
+  S.nicknames[pk] = name.trim();
+  // Refresh header
+  const updated = nameFor(pk);
+  el('ch-name').textContent = updated;
+  el('ch-avatar').textContent = updated[0]?.toUpperCase() || '?';
+  renderConvList();
+}
+
+async function openRoom(roomId) {
+  S.activeConv = {type:'room', id: roomId, isPublic: false};
+  el('pub-header-bar')?.classList.remove('visible');
+  const room = S.rooms.find(r => r.room_id === roomId);
+  const name = room?.display_name || `#${roomId}`;
+
+  el('chat-header').style.display = 'flex';
+  el('ch-avatar').textContent = '#';
+  el('ch-avatar').style.background = '#2a5f2a';
+  el('ch-name').textContent = name;
+  el('btn-set-name').style.display = 'none';
+  el('ch-sub').textContent = `Room: ${roomId}`;
+  el('welcome').style.display = 'none';
+  el('messages-area').style.display = 'flex';
+  el('input-area').style.display = 'flex';
+  updateEncToggleUI();
+
+  renderConvList();
+  await loadMessages();
+}
+
+async function loadMessages() {
+  if (!S.activeConv) return;
+  try {
+    if (S.activeConv.type === 'dm') {
+      const d = await fetch(`/api/dm/messages?user_a=${S.activeWallet}&user_b=${S.activeConv.id}`).then(r=>r.json());
+      S.openDms[S.activeConv.id] = d.messages || [];
+      renderDmMessages(S.openDms[S.activeConv.id]);
+    } else {
+      const d = await fetch(`/api/room/messages?room_id=${encodeURIComponent(S.activeConv.id)}`).then(r=>r.json());
+      renderRoomMessages(d.messages || []);
+    }
+  } catch(e) { console.warn('loadMessages error:', e); }
+}
+
+function renderDmMessages(msgs) {
+  const area = el('messages-area');
+  if (!msgs.length) {
+    area.innerHTML = '<div class="date-divider">No messages yet. Say hello! 👋</div>';
+    return;
+  }
+  area.innerHTML = msgs.map(m => {
+    const mine = m.from_pk === S.activeWallet;
+    const encBadge = m.encrypted ? `<span class="enc-badge" title="End-to-end encrypted">🔒</span>` : '';
+    return `<div class="msg-row ${mine?'mine':'theirs'}">
+      <div class="msg-bubble">
+        ${!mine ? `<div class="msg-sender">${esc(nameFor(m.from_pk))}</div>` : ''}
+        ${esc(m.content)}${encBadge}
+        <div class="msg-time">${timeFmt(m.timestamp)}</div>
+      </div>
+    </div>`;
+  }).join('');
+  area.scrollTop = area.scrollHeight;
+}
+
+function renderRoomMessages(msgs) {
+  const area = el('messages-area');
+  if (!msgs.length) {
+    area.innerHTML = '<div class="date-divider">No messages in this room yet.</div>';
+    return;
+  }
+  area.innerHTML = msgs.map(m => {
+    const mine = m.from_pk === S.activeWallet;
+    return `<div class="msg-row ${mine?'mine':'theirs'}">
+      <div class="msg-bubble">
+        ${!mine ? `<div class="msg-sender">${esc(nameFor(m.from_pk))}</div>` : ''}
+        ${esc(m.content)}
+        <div class="msg-time">${timeFmt(m.timestamp)}</div>
+      </div>
+    </div>`;
+  }).join('');
+  area.scrollTop = area.scrollHeight;
+}
+
+// ── Send ───────────────────────────────────────────────────────────────────────
+async function sendMessage() {
+  if (!S.activeConv || !S.activeWallet) return;
+  const inp = el('msg-input');
+  const content = inp.value.trim();
+  if (!content) return;
+
+  el('send-btn').disabled = true;
+  inp.disabled = true;
+
+  try {
+    if (S.activeConv.type === 'dm') {
+      await api('POST', '/api/dm/send', {from_pubkey:S.activeWallet, to_pubkey:S.activeConv.id, content});
+    } else {
+      await api('POST', '/api/room/post', {from_pubkey:S.activeWallet, room_id:S.activeConv.id, content});
+    }
+    inp.value = '';
+    inp.style.height = '';
+    await loadMessages();
+  } catch(e) {
+    alert('Send failed: ' + e.message);
+  } finally {
+    el('send-btn').disabled = false;
+    inp.disabled = false;
+    inp.focus();
+  }
+}
+
+function handleKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+}
+
+function autoResize(inp) {
+  inp.style.height = 'auto';
+  inp.style.height = Math.min(inp.scrollHeight, 120) + 'px';
+}
+
+// ── Wallet Actions ─────────────────────────────────────────────────────────────
+async function doGenerate() {
+  const name = el('gen-name').value.trim();
+  if (!name) { alert('Enter a display name'); return; }
+  const btn = el('gen-btn');
+  btn.disabled = true; btn.textContent = '⏳ Creating…';
+  setModalStatus('wallet-status', 'Generating wallet and funding from faucet… ~30–60 seconds.', 'info');
+  try {
+    const d = await api('POST', '/api/wallet/create', {display_name: name});
+    setModalStatus('wallet-status', `✓ Created! Public key: ${shortPk(d.public_key_hex)}`, 'success');
+    await reload();
+    selectWallet(d.public_key_hex);
+    setTimeout(() => hideModal('wallet-modal'), 1800);
+  } catch(e) {
+    setModalStatus('wallet-status', 'Error: ' + e.message, 'error');
+  } finally {
+    btn.disabled = false; btn.textContent = '✨ Generate & Fund';
+  }
+}
+
+async function doImportHex() {
+  const name = el('hex-name').value.trim();
+  const acc = el('hex-acc').value.trim();
+  const view = el('hex-view').value.trim();
+  if (!name || !acc || !view) { alert('All fields are required'); return; }
+  const btn = el('hex-btn');
+  btn.disabled = true;
+  setModalStatus('wallet-status', 'Importing wallet…', 'info');
+  try {
+    const d = await api('POST', '/api/wallet/import', {display_name:name, account_secret_hex:acc, view_secret_hex:view});
+    setModalStatus('wallet-status', `✓ Imported! Public key: ${shortPk(d.public_key_hex)}`, 'success');
+    await reload();
+    selectWallet(d.public_key_hex);
+    setTimeout(() => hideModal('wallet-modal'), 1800);
+  } catch(e) {
+    setModalStatus('wallet-status', 'Error: ' + e.message, 'error');
+  } finally { btn.disabled = false; }
+}
+
+async function doImportPassphrase() {
+  const name = el('pp-name').value.trim();
+  const phrase = el('pp-phrase').value;
+  if (!name || !phrase) { alert('All fields are required'); return; }
+  const btn = el('pp-btn');
+  btn.disabled = true;
+  setModalStatus('wallet-status', 'Deriving keys from passphrase…', 'info');
+  try {
+    const d = await api('POST', '/api/wallet/passphrase', {display_name:name, passphrase:phrase});
+    setModalStatus('wallet-status', `✓ Imported! Public key: ${shortPk(d.public_key_hex)}`, 'success');
+    await reload();
+    selectWallet(d.public_key_hex);
+    setTimeout(() => hideModal('wallet-modal'), 1800);
+  } catch(e) {
+    setModalStatus('wallet-status', 'Error: ' + e.message, 'error');
+  } finally { btn.disabled = false; }
+}
+
+// ── Template Config ────────────────────────────────────────────────────────────
+async function doConfigure() {
+  const addr = el('tmpl-addr').value.trim();
+  if (!addr) { alert('Enter template address'); return; }
+  const btn = el('configure-btn');
+  btn.disabled = true;
+  setModalStatus('template-status', 'Configuring template and deploying component…', 'info');
+  try {
+    await api('POST', '/api/template/configure', {template_address: addr});
+    setModalStatus('template-status', '✓ Configured! Deploying component…', 'success');
+    await reload();
+    setTimeout(() => hideModal('template-modal'), 2000);
+  } catch(e) {
+    setModalStatus('template-status', 'Error: ' + e.message, 'error');
+    btn.disabled = false;
+  }
+}
+
+async function doAutopublish() {
+  const btn = el('autopub-btn');
+  btn.disabled = true;
+  setModalStatus('template-status', 'Publishing WASM template on-chain… ~60 seconds', 'info');
+  try {
+    await api('POST', '/api/template/publish', {});
+    setModalStatus('template-status', '✓ Publishing started! Check status banner.', 'success');
+    await reload();
+    setTimeout(() => hideModal('template-modal'), 2500);
+  } catch(e) {
+    setModalStatus('template-status', 'Error: ' + e.message, 'error');
+    btn.disabled = false;
+  }
+}
+
+// ── DM ─────────────────────────────────────────────────────────────────────────
+function doOpenDm() {
+  const pk = el('dm-recipient').value.trim();
+  const nick = el('dm-nickname').value.trim();
+  if (!pk) { alert('Enter recipient public key'); return; }
+  if (nick) S.nicknames[pk] = nick;
+  if (!S.openDms[pk]) S.openDms[pk] = [];
+  hideModal('dm-modal');
+  el('dm-recipient').value = ''; el('dm-nickname').value = '';
+  openDm(pk);
+}
+
+// ── Room Create ────────────────────────────────────────────────────────────────
+async function doCreateRoom() {
+  const roomId = el('room-id-input').value.trim();
+  const dname = el('room-dname').value.trim();
+  if (!roomId || !dname) { alert('Room ID and display name are required'); return; }
+  if (/\s/.test(roomId)) { alert('Room ID cannot contain spaces'); return; }
+  const btn = el('room-create-btn');
+  btn.disabled = true;
+  setModalStatus('room-status', 'Creating room on-chain…', 'info');
+  try {
+    await api('POST', '/api/room/create', {from_pubkey:S.activeWallet, room_id:roomId, display_name:dname});
+    setModalStatus('room-status', `✓ Room #${roomId} created!`, 'success');
+    await reload();
+    el('room-id-input').value = ''; el('room-dname').value = '';
+    setTimeout(() => { hideModal('room-modal'); openRoom(roomId); }, 1200);
+  } catch(e) {
+    setModalStatus('room-status', 'Error: ' + e.message, 'error');
+  } finally { btn.disabled = false; }
+}
+
+// ── Room Join ──────────────────────────────────────────────────────────────────
+async function doJoinRoom() {
+  const roomId = el('join-id').value.trim();
+  const dname = el('join-dname').value.trim();
+  if (!roomId) { alert('Enter a room ID'); return; }
+  try {
+    await api('POST', '/api/room/join', {room_id:roomId, display_name:dname||`#${roomId}`});
+    await reload();
+    el('join-id').value = ''; el('join-dname').value = '';
+    hideModal('join-modal');
+    openRoom(roomId);
+  } catch(e) { alert('Join failed: ' + e.message); }
+}
+
+// ── Demo Mode ──────────────────────────────────────────────────────────────────
+async function startDemo() {
+  const btn = el('demo-btn');
+  const origHTML = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner" style="width:12px;height:12px;border-width:2px"></span> Starting…';
+
+  try {
+    await api('POST', '/api/demo/start', {});
+  } catch(e) {
+    btn.disabled = false;
+    btn.innerHTML = origHTML;
+    alert('Demo start failed: ' + e.message);
+    return;
+  }
+
+  btn.innerHTML = '<span class="spinner" style="width:12px;height:12px;border-width:2px"></span> Funding wallets… (~60s)';
+
+  let attempts = 0;
+  const poll = setInterval(async () => {
+    attempts++;
+    await reload();
+    const ootle    = S.wallets.find(w => w.display_name === 'Ootle (Demo)');
+    const minotari = S.wallets.find(w => w.display_name === 'Minotari (Demo)');
+    if (ootle && minotari) {
+      clearInterval(poll);
+      btn.disabled = false;
+      btn.innerHTML = origHTML;
+      // Auto-select Ootle and open DM to Minotari
+      S.activeWallet = ootle.public_key_hex;
+      S.nicknames[minotari.public_key_hex] = 'Minotari (Demo)';
+      renderWalletSelector();
+      if (!S.openDms[minotari.public_key_hex]) S.openDms[minotari.public_key_hex] = [];
+      await openDm(minotari.public_key_hex);
+    } else if (attempts > 45) { // ~160s max
+      clearInterval(poll);
+      btn.disabled = false;
+      btn.innerHTML = origHTML;
+      alert('Demo setup is taking longer than expected. Check the 🔍 Debug panel — wallets may still be funding in the background.');
+    }
+  }, 3500);
+}
+
+// ── Debug Panel ────────────────────────────────────────────────────────────────
+function toggleDebug() {
+  S.debugOpen = !S.debugOpen;
+  el('debug-panel').classList.toggle('open', S.debugOpen);
+  if (S.debugOpen) loadDebugData();
+}
+
+async function loadDebugData() {
+  try {
+    const d = await fetch('/api/debug').then(r=>r.json());
+    // Update badge count on debug button
+    const btn = el('dbg-btn');
+    const count = (d.transactions||[]).length;
+    if (btn) btn.title = `Debug Panel — ${count} transaction${count===1?'':'s'}`;
+    if (S.activeDbgTab === 'dbg-tx') renderDbgTx(d);
+    else renderDbgNet(d);
+  } catch {}
+}
+
+function renderDbgTx(d) {
+  const txs = [...(d.transactions||[])].reverse();
+  const totalFees = (d.total_fees_micro_tari||0).toLocaleString();
+  const totalTari = (d.total_fees_tari||0).toFixed(6);
+  let html = `<div class="d-stat"><span class="d-label">Total fees</span>
+    <span class="d-val">${totalFees} µTARI<br>${totalTari} tTARI</span></div>
+    <div class="d-stat"><span class="d-label">Transactions</span>
+    <span class="d-val">${txs.length}</span></div>
+    <div class="d-section">Transactions (newest first) — click header to expand/collapse</div>`;
+  if (!txs.length) {
+    html += '<p style="color:var(--subtext);font-size:13px;padding:8px 0">No transactions yet.</p>';
+  }
+  for (const tx of txs) {
+    const dt = new Date((tx.timestamp||0)*1000);
+    const timeStr = dt.toLocaleString([],{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit',second:'2-digit'});
+    const status = tx.status || 'Pending';
+    const statusColor = status === 'Confirmed' ? 'var(--success)' : status === 'Failed' ? 'var(--error)' : 'var(--warning)';
+    let fields = `<div class="tx-field"><span class="tx-fl">TX ID</span><span class="tx-fv">${esc(tx.id||'—')}</span></div>`;
+    if (tx.status)           fields += `<div class="tx-field"><span class="tx-fl">Status</span><span class="tx-fv" style="color:${statusColor}">${esc(tx.status)}</span></div>`;
+    if (tx.network)          fields += `<div class="tx-field"><span class="tx-fl">Network</span><span class="tx-fv">${esc(tx.network)}</span></div>`;
+    if (tx.from_pk)          fields += `<div class="tx-field"><span class="tx-fl">From</span><span class="tx-fv">${esc(tx.from_pk)}</span></div>`;
+    if (tx.to_id)            fields += `<div class="tx-field"><span class="tx-fl">To / Room</span><span class="tx-fv">${esc(tx.to_id)}</span></div>`;
+    if (tx.content_preview)  fields += `<div class="tx-field"><span class="tx-fl">Content</span><span class="tx-fv" style="font-family:inherit">"${esc(tx.content_preview)}"</span></div>`;
+    if (tx.component)        fields += `<div class="tx-field"><span class="tx-fl">Component</span><span class="tx-fv">${esc(tx.component)}</span></div>`;
+    fields += `<div class="tx-field"><span class="tx-fl">Fee</span><span class="tx-fv">${(tx.fee||0).toLocaleString()} µTARI</span></div>`;
+    fields += `<div class="tx-field"><span class="tx-fl">Time</span><span class="tx-fv">${timeStr}</span></div>`;
+    const cardId = `txcard-${tx.id||Math.random().toString(36).slice(2)}`;
+    html += `<div class="tx-card expanded" id="${cardId}">
+      <div class="tx-card-header" onclick="this.closest('.tx-card').classList.toggle('expanded')" style="cursor:pointer">
+        <span class="tx-badge">${esc(tx.tx_type||'TX')}</span>
+        <span style="color:${statusColor};font-size:10px;font-weight:600">${esc(status)}</span>
+        <span class="tx-fee">${(tx.fee||0).toLocaleString()} µ</span>
+        <span class="tx-time">${timeStr}</span>
+      </div>
+      <div class="tx-card-body">${fields}
+        ${tx.id ? `<div class="tx-events-panel" id="txev-${cardId}"><span style="color:var(--subtext);font-size:11px">⏳ Loading chain events…</span></div>` : ''}
+        <div class="tx-hint">▲ click header to collapse</div>
+      </div>
+    </div>`;
+  }
+  el('dbg-tx').innerHTML = html;
+
+  // Auto-fetch chain events for every TX card sequentially (avoid flooding indexer)
+  (async () => {
+    for (const tx of txs) {
+      if (!tx.id) continue;
+      const cardId = `txcard-${tx.id}`;
+      await autoLoadTxEvents(tx.id, cardId);
+    }
+  })();
+}
+
+function renderDbgNet(d) {
+  const items = [
+    ['Network', d.network],
+    ['Indexer', d.indexer_url],
+    ['Total Txs', d.total_transactions],
+    ['Total Fees', `${(d.total_fees_micro_tari||0).toLocaleString()} µTARI`],
+    ['Template', d.template_address || 'Not set'],
+    ['Component', d.component_address || 'Not deployed'],
+  ];
+  let html = items.map(([l,v]) =>
+    `<div class="d-stat"><span class="d-label">${l}</span><span class="d-val">${esc(String(v||'—'))}</span></div>`
+  ).join('');
+
+  html += '<div class="d-section">Fee Breakdown</div>';
+  for (const [k,v] of Object.entries(d.fee_breakdown||{})) {
+    html += `<div class="d-stat"><span class="d-label">${k.replace(/_/g,' ')}</span><span class="d-val">${esc(v)}</span></div>`;
+  }
+  html += '<div class="d-section">Wallets</div>';
+  for (const w of (d.wallets||[])) {
+    html += `<div class="d-stat" style="flex-direction:column;align-items:flex-start;gap:3px">
+      <span style="font-weight:600;font-size:13px">${esc(w.display_name)}</span>
+      <span class="d-val">PK: ${esc(w.public_key_hex)}</span>
+      <span class="d-val" style="color:var(--subtext)">Acct: ${esc(w.account_address)}</span>
+    </div>`;
+  }
+  el('dbg-net').innerHTML = html;
+}
+
+// ── Chain Events Viewer ────────────────────────────────────────────────────────
+function renderTxEvents(events) {
+  if (!events.length) {
+    return `<p style="color:var(--subtext);font-size:11px;padding:4px 0">No on-chain events found for this transaction.</p>`;
+  }
+  let html = '';
+  for (const ev of events) {
+    const topic = ev.topic || '(unknown)';
+    const payload = ev.payload ? JSON.stringify(ev.payload, null, 2) : '';
+    let bg = 'rgba(255,255,255,0.04)';
+    if (topic.includes('DmSent') || topic.includes('RoomPost') || topic.includes('Messaging')) bg = 'rgba(33,150,243,0.12)';
+    else if (topic.includes('pay_fee') || topic.includes('Fee')) bg = 'rgba(255,152,0,0.12)';
+    else if (topic.includes('deposit') || topic.includes('withdraw')) bg = 'rgba(76,175,80,0.12)';
+    html += `<div class="tx-ev-item" style="background:${bg}">
+      <div class="ev-topic">${esc(topic)}</div>
+      ${payload ? `<div class="ev-payload">${esc(payload)}</div>` : ''}
+    </div>`;
+  }
+  return html;
+}
+
+// Cache persists across re-renders so we never re-fetch the same TX twice
+const txEventsCache = new Map();
+
+async function autoLoadTxEvents(txId, cardId) {
+  const panel = document.getElementById(`txev-${cardId}`);
+  if (!panel) return;
+  // If already cached, just render from cache (no network call)
+  if (txEventsCache.has(txId)) {
+    panel.innerHTML = renderTxEvents(txEventsCache.get(txId));
+    return;
+  }
+  try {
+    const r = await fetch(`/api/tx/events?tx_id=${encodeURIComponent(txId)}`);
+    const d = await r.json();
+    const events = d.events || [];
+    txEventsCache.set(txId, events);
+    const p2 = document.getElementById(`txev-${cardId}`); // re-query after await
+    if (p2) p2.innerHTML = renderTxEvents(events);
+  } catch(e) {
+    const p2 = document.getElementById(`txev-${cardId}`);
+    if (p2) p2.innerHTML = `<p style="color:var(--error);font-size:11px;padding:4px 0">Error: ${esc(e.message)}</p>`;
+  }
+}
+
+// ── Wallet HUD ─────────────────────────────────────────────────────────────────
+function updateHud() {
+  const hud = el('wallet-hud');
+  if (!S.activeWallet) {
+    hud.classList.remove('visible');
+    return;
+  }
+  const w = S.wallets.find(w => w.public_key_hex === S.activeWallet);
+  if (!w) {
+    hud.classList.remove('visible');
+    return;
+  }
+  hud.classList.add('visible');
+  el('hud-name').textContent = w.display_name;
+  const pk = w.public_key_hex || '';
+  el('hud-pk').textContent = pk.length >= 14 ? pk.slice(0,8) + '…' + pk.slice(-6) : pk;
+  el('hud-pk-full').textContent = pk;
+  const addr = w.account_address || '';
+  el('hud-addr').textContent = addr.length >= 20 ? addr.slice(0,12) + '…' + addr.slice(-8) : addr;
+  el('hud-addr-full').textContent = addr;
+}
+
+async function hudCopy(hiddenId) {
+  const val = el(hiddenId)?.textContent || '';
+  if (!val) return;
+  try {
+    await navigator.clipboard.writeText(val);
+    // Brief visual feedback
+    const btn = event?.target;
+    if (btn) { const orig = btn.textContent; btn.textContent = '✓'; setTimeout(() => btn.textContent = orig, 1000); }
+  } catch(e) { alert('Copy failed: ' + e.message); }
+}
+
+async function copyText(text) {
+  if (!text) return;
+  try {
+    await navigator.clipboard.writeText(text);
+  } catch(e) { alert('Copy failed: ' + e.message); }
+}
+
+async function doRefreshBalance() {
+  if (!S.activeWallet) return;
+  const btn = el('hud-refresh-btn');
+  const balEl = el('hud-balance');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner" style="width:10px;height:10px;border-width:2px"></span>';
+  balEl.textContent = '…';
+  try {
+    const d = await fetch(`/api/wallet/balance?public_key_hex=${encodeURIComponent(S.activeWallet)}`).then(r=>r.json());
+    balEl.textContent = d.balance_display || 'unknown';
+  } catch(e) {
+    balEl.textContent = 'error';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '↺ Balance';
+  }
+}
+
+async function doHudFaucet() {
+  if (!S.activeWallet) return;
+  if (!confirm('Request 10 tTARI from the Esmeralda faucet for this wallet?')) return;
+  try {
+    await api('POST', '/api/wallet/faucet', {public_key_hex: S.activeWallet});
+    alert('Faucet request submitted! Balance will update after ~60s.');
+  } catch(e) {
+    alert('Faucet failed: ' + e.message);
+  }
+}
+
+// ── Backup Modal ────────────────────────────────────────────────────────────────
+async function showBackupModal() {
+  if (!S.activeWallet) { alert('No wallet selected'); return; }
+  try {
+    const d = await fetch(`/api/wallet/export-keys?public_key_hex=${encodeURIComponent(S.activeWallet)}`).then(r=>r.json());
+    if (d.error) { alert('Error: ' + d.error); return; }
+    el('bk-name').textContent = d.display_name || '—';
+    el('bk-pk').textContent = d.public_key_hex || '—';
+    el('bk-addr').textContent = d.account_address || '—';
+    el('bk-acc-hex').textContent = d.account_secret_hex || '—';
+    el('bk-view-hex').textContent = d.view_secret_hex || '—';
+    if (d.account_mnemonic) {
+      el('bk-acc-mn').textContent = d.account_mnemonic;
+      el('bk-acc-mn-group').style.display = '';
+    } else {
+      el('bk-acc-mn-group').style.display = 'none';
+    }
+    if (d.view_mnemonic) {
+      el('bk-view-mn').textContent = d.view_mnemonic;
+      el('bk-view-mn-group').style.display = '';
+    } else {
+      el('bk-view-mn-group').style.display = 'none';
+    }
+    showModal('backup-modal');
+  } catch(e) {
+    alert('Failed to load backup data: ' + e.message);
+  }
+}
+
+// ── Mnemonic Import ─────────────────────────────────────────────────────────────
+async function doImportMnemonic() {
+  const name = el('mn-name').value.trim();
+  const acc = el('mn-acc').value.trim();
+  const view = el('mn-view').value.trim();
+  if (!name || !acc || !view) { alert('All fields required'); return; }
+  const btn = el('mn-btn');
+  btn.disabled = true;
+  setModalStatus('wallet-status', 'Importing from seed words...', 'info');
+  try {
+    const d = await api('POST', '/api/wallet/import-mnemonic', {display_name:name, account_words:acc, view_words:view});
+    setModalStatus('wallet-status', `✓ Imported! PK: ${shortPk(d.public_key_hex)}`, 'success');
+    await reload();
+    selectWallet(d.public_key_hex);
+    setTimeout(() => hideModal('wallet-modal'), 1800);
+  } catch(e) {
+    setModalStatus('wallet-status', 'Error: ' + e.message, 'error');
+  } finally { btn.disabled = false; }
+}
+
+// ── Component Join ──────────────────────────────────────────────────────────────
+async function doJoinComponent() {
+  const compAddr = el('join-component-addr').value.trim();
+  const tmplAddr = el('join-template-addr').value.trim();
+  if (!compAddr || !tmplAddr) { alert('Both addresses are required'); return; }
+  const btn = el('join-component-btn');
+  btn.disabled = true;
+  setModalStatus('template-status', 'Joining component...', 'info');
+  try {
+    await api('POST', '/api/component/join', {component_address: compAddr, template_address: tmplAddr});
+    setModalStatus('template-status', '✓ Joined! Component is now active.', 'success');
+    await reload();
+    setTimeout(() => hideModal('template-modal'), 1800);
+  } catch(e) {
+    setModalStatus('template-status', 'Error: ' + e.message, 'error');
+  } finally { btn.disabled = false; }
+}
+
+// ── Template Modal with Share Section ──────────────────────────────────────────
+function openTemplateModal() {
+  // Populate share section if Ready
+  const shareSection = el('tmpl-share-section');
+  const st = S.status?.setup_status;
+  if (st === 'Ready' && S.status?.component_address) {
+    el('share-component').textContent = S.status.component_address;
+    el('share-template').textContent = S.status.template_address || '';
+    shareSection.style.display = 'block';
+  } else {
+    shareSection.style.display = 'none';
+  }
+  showModal('template-modal');
+}
+
+// ── Sidebar Tab Switching ──────────────────────────────────────────────────────
+function switchSidebarTab(tab) {
+  S.sidebarTab = tab;
+  ['chats','public'].forEach(t => {
+    el(`snav-${t}`)?.classList.toggle('active', t === tab);
+  });
+  const convList = el('conv-list');
+  const pubList = el('public-list');
+  if (tab === 'chats') {
+    convList.style.display = '';
+    pubList.classList.remove('visible');
+  } else {
+    convList.style.display = 'none';
+    pubList.classList.add('visible');
+    renderPublicList();
+    // Show info modal the first time user opens the Public tab
+    if (!localStorage.getItem('tari_public_seen')) {
+      localStorage.setItem('tari_public_seen', '1');
+      setTimeout(() => showModal('pubinfo-modal'), 300);
+    }
+  }
+}
+
+// ── Public Chat ────────────────────────────────────────────────────────────────
+function renderPublicList() {
+  const list = el('public-list');
+  if (!list) return;
+  const cfg = S.publicConfig;
+  const rooms = cfg?.rooms || [
+    {room_id:'tari-messenger-test-chat', display_name:'Tari Messenger Test Chat', description:'Community testing ground for the Tari Messenger app on the Esmeralda testnet. Built by a community member — not an official Tari protocol channel. All messages are stored on-chain and publicly visible to anyone with the contract address.'}
+  ];
+
+  let html = `<div class="pub-info-bar">
+    <strong style="color:var(--warning)">Community testing rooms</strong> — messages, keys &amp; timestamps are on-chain &amp; visible to anyone with the contract address.
+    <button class="pub-room-info-btn" onclick="event.stopPropagation();showModal('pubinfo-modal')" title="Learn more about public chats">ℹ</button>
+  </div>`;
+
+  for (const room of rooms) {
+    const isActive = S.activeConv?.type === 'room' && S.activeConv?.id === room.room_id;
+    html += `<div class="pub-room-card${isActive?' active':''}" onclick="openPublicRoom('${esc(room.room_id)}','${esc(room.display_name)}')">
+      <div class="pub-room-name">
+        🌐 ${esc(room.display_name)}
+        <span class="pub-tag testnet">testnet</span>
+        <span class="pub-tag open">public</span>
+        <button class="pub-room-info-btn" onclick="event.stopPropagation();showModal('pubinfo-modal')" title="About this room &amp; privacy info">ℹ</button>
+      </div>
+      <div class="pub-room-desc">${esc(room.description)}</div>
+    </div>`;
+  }
+
+  if (!S.status?.component_address) {
+    html += `<div class="pub-connect-wrap">
+      <p style="font-size:11px;color:var(--subtext);margin-bottom:10px;line-height:1.5">To post messages, you need a messaging contract deployed. Quick Start auto-deploys one, or use ⚙ Settings to configure manually.</p>
+      <button class="pub-connect-btn" onclick="openTemplateModal()">⚙ Configure Contract →</button>
+    </div>`;
+  }
+
+  // Show "not live yet" notice if public contract not configured
+  if (cfg && !cfg.configured) {
+    html += `<div style="padding:9px 14px;font-size:11px;color:var(--subtext);background:rgba(255,152,0,0.06);border-bottom:1px solid var(--divider)">
+      ⚠ The shared public contract has not been deployed yet — messages will route to your own component if configured.
+    </div>`;
+  }
+
+  html += `<div class="pub-own-card">
+    <div class="pub-own-title">🏗 Want more privacy?</div>
+    <div class="pub-own-desc">Deploy your own messaging contract on Tari Ootle. Share the contract address only with people you trust — messages will only be visible within that private contract. Anyone who wants to chat needs that address.</div>
+    <button class="pub-connect-btn" style="font-size:11px;padding:6px 12px" onclick="openTemplateModal()">⚙ Deploy Your Own Contract →</button>
+  </div>`;
+
+  list.innerHTML = html;
+}
+
+async function openPublicRoom(roomId, displayName) {
+  // Auto-join locally if not already in room list
+  if (!S.rooms.some(r => r.room_id === roomId)) {
+    try {
+      await api('POST', '/api/room/join', {room_id: roomId, display_name: displayName, creator_pk: ''});
+      await reload();
+    } catch(e) { console.warn('auto-join public room failed:', e); }
+  }
+  S.activeConv = {type:'room', id: roomId, isPublic: true};
+  const name = displayName;
+  el('chat-header').style.display = 'flex';
+  el('ch-avatar').textContent = '🌐';
+  el('ch-avatar').style.background = '#1a3a5c';
+  el('ch-name').textContent = name;
+  el('ch-sub').textContent = `Public · Room: ${roomId}`;
+  el('btn-set-name').style.display = 'none';
+  el('welcome').style.display = 'none';
+  el('messages-area').style.display = 'flex';
+  el('input-area').style.display = 'flex';
+  el('pub-header-bar').classList.add('visible');
+  updateEncToggleUI();
+  renderPublicList(); // update active state
+  await loadMessages();
+}
+
+// ── Onboarding ─────────────────────────────────────────────────────────────────
+function showOnboardingIfNeeded() {
+  if (!localStorage.getItem('tari_welcomed')) {
+    showModal('onboarding-modal');
+  }
+}
+
+function switchObStep(n) {
+  document.querySelectorAll('.ob-step').forEach(s => s.classList.remove('active'));
+  el(`ob-step${n}`)?.classList.add('active');
+}
+
+function chooseSimple() {
+  switchObStep(2);
+}
+
+function chooseAdvanced() {
+  localStorage.setItem('tari_welcomed', '1');
+  hideModal('onboarding-modal');
+  // Save mode to server
+  fetch('/api/settings', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({setup_mode:'Advanced'})});
+  openTemplateModal();
+}
+
+async function finishOnboarding() {
+  localStorage.setItem('tari_welcomed', '1');
+  // Save mode to server
+  fetch('/api/settings', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({setup_mode:'Simple'})});
+  hideModal('onboarding-modal');
+  // Auto-join the public rooms locally
+  const rooms = S.publicConfig?.rooms || [
+    {room_id:'tari-messenger-test-chat', display_name:'Tari Messenger Test Chat'}
+  ];
+  for (const room of rooms) {
+    if (!S.rooms.some(r => r.room_id === room.room_id)) {
+      try { await api('POST', '/api/room/join', {room_id: room.room_id, display_name: room.display_name, creator_pk: ''}); } catch {}
+    }
+  }
+  await reload();
+  // Switch to Public tab
+  switchSidebarTab('public');
+  // Open wallet creation
+  showModal('wallet-modal');
+}
+
+function dismissOnboarding() {
+  localStorage.setItem('tari_welcomed', '1');
+  hideModal('onboarding-modal');
+}
+
+// ── Boot ───────────────────────────────────────────────────────────────────────
+init();
+</script>
+</body>
+</html>

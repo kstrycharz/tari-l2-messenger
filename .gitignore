@@ -1,0 +1,40 @@
+# Rust build artifacts
+target/
+
+# Backup files
+**/*.bak
+**/*.orig
+
+# Compiled WASM — rebuild with: cargo build --target wasm32-unknown-unknown --release
+**/*.wasm
+
+# Template Cargo.lock — library/WASM crate, not needed in CI
+messaging_template/Cargo.lock
+
+# Local state files — contain private keys and message history, NEVER commit
+messaging-state*.json
+*-state*.json
+
+# Tari wallet daemon binary — download from releases
+*.exe
+
+# Environment / secrets
+.env
+.env.*
+
+# Claude Code project settings (internal tooling)
+.claude/
+
+# Unnamed scratch assets
+Untitled.png
+Untitled*.png
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
