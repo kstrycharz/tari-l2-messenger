@@ -99,17 +99,6 @@ cargo run
 
 Open `http://localhost:3000` in your browser.
 
-**Dev mode (two clients):**
-```bash
-# Terminal 1
-cd messaging_app
-cargo run -- --port 3000 --state messaging-state-a.json
-
-# Terminal 2
-cd messaging_app
-cargo run -- --port 3001 --state messaging-state-b.json
-```
-
 **Debian/Ubuntu — if Rust isn't installed yet:**
 ```bash
 sudo apt update && sudo apt install -y build-essential curl
@@ -138,17 +127,6 @@ cargo run
 ```
 
 Open `http://localhost:3000` in your browser.
-
-**Dev mode (two clients):**
-```bash
-# Terminal 1
-cd messaging_app
-cargo run -- --port 3000 --state messaging-state-a.json
-
-# Terminal 2
-cd messaging_app
-cargo run -- --port 3001 --state messaging-state-b.json
-```
 
 **If Rust isn't installed yet:**
 ```bash
