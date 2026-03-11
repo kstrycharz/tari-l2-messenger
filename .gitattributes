@@ -1,0 +1,13 @@
+# Normalize line endings
+* text=auto
+
+# Windows batch files keep CRLF
+*.bat text eol=crlf
+
+# Rust, HTML, TOML — LF
+*.rs text eol=lf
+*.html text eol=lf
+*.toml text eol=lf
+*.yml text eol=lf
+*.md text eol=lf
+*.json text eol=lf
