@@ -40,45 +40,128 @@ Tari DAN validators  (decentralized — hold the on-chain state)
 
 ---
 
-## Prerequisites
+## Building
+
+### Prerequisites
+
+All platforms need the Rust toolchain and the WASM compile target:
 
 ```bash
-# Rust toolchain
+# 1. Install Rust (all platforms)
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 
-# WASM target (one-time)
+# 2. Add the WASM target (one-time)
 rustup target add wasm32-unknown-unknown
 ```
 
 ---
 
-## Quick Start
+### Windows
 
-### Windows (one-click)
+**One-click (recommended):**
 ```
 Double-click launch.bat
 ```
+Builds the WASM contract if needed, then starts the app. Open `http://localhost:3000`.
 
-### Manual
+**Manual:**
+```bat
+cd messaging_template
+cargo build --target wasm32-unknown-unknown --release
+cd ..\messaging_app
+cargo run
+```
+
+**Dev mode — two clients on one machine:**
+```
+Double-click launch-dev.bat
+```
+Launches two independent app instances on ports 3000 and 3001 for testing two-way messaging locally.
+
+---
+
+### Linux
+
 ```bash
-# 1. Build the WASM smart contract
+# Clone and enter the repo
+git clone https://github.com/YOUR_NAME/tari-messenger.git
+cd tari-messenger
+
+# Build the WASM smart contract
 cd messaging_template
 cargo build --target wasm32-unknown-unknown --release
 cd ..
 
-# 2. Start the app
+# Start the app
 cd messaging_app
 cargo run
-
-# 3. Open http://localhost:3000
 ```
 
-### Dev mode (two clients on one machine)
+Open `http://localhost:3000` in your browser.
+
+**Dev mode (two clients):**
+```bash
+# Terminal 1
+cd messaging_app
+cargo run -- --port 3000 --state messaging-state-a.json
+
+# Terminal 2
+cd messaging_app
+cargo run -- --port 3001 --state messaging-state-b.json
 ```
-Double-click launch-dev.bat
-# Client 1 -> http://localhost:3000
-# Client 2 -> http://localhost:3001
+
+**Debian/Ubuntu — if Rust isn't installed yet:**
+```bash
+sudo apt update && sudo apt install -y build-essential curl
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+source "$HOME/.cargo/env"
+rustup target add wasm32-unknown-unknown
 ```
+
+---
+
+### macOS
+
+```bash
+# Clone and enter the repo
+git clone https://github.com/YOUR_NAME/tari-messenger.git
+cd tari-messenger
+
+# Build the WASM smart contract
+cd messaging_template
+cargo build --target wasm32-unknown-unknown --release
+cd ..
+
+# Start the app
+cd messaging_app
+cargo run
+```
+
+Open `http://localhost:3000` in your browser.
+
+**Dev mode (two clients):**
+```bash
+# Terminal 1
+cd messaging_app
+cargo run -- --port 3000 --state messaging-state-a.json
+
+# Terminal 2
+cd messaging_app
+cargo run -- --port 3001 --state messaging-state-b.json
+```
+
+**If Rust isn't installed yet:**
+```bash
+# Install Xcode command-line tools first (if prompted)
+xcode-select --install
+
+# Then install Rust
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+source "$HOME/.cargo/env"
+rustup target add wasm32-unknown-unknown
+```
+
+> **Apple Silicon (M1/M2/M3):** No extra steps needed. The Rust toolchain and WASM target work natively on `aarch64-apple-darwin`.
 
 ---
 
