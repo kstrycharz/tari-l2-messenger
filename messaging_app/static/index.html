@@ -91,6 +91,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .msg-row.mine .msg-bubble { background: var(--accent-dim); border-bottom-right-radius: 3px; }
 .msg-row.theirs .msg-bubble { background: var(--surface); border-bottom-left-radius: 3px; }
 .msg-sender { font-size: 11px; font-weight: 600; color: #64b5f6; margin-bottom: 3px; }
+.msg-sender.clickable { cursor: pointer; }
+.msg-sender.clickable:hover { text-decoration: underline; color: var(--accent); }
 .msg-time { font-size: 10px; color: var(--subtext); text-align: right; margin-top: 3px; }
 .date-divider { text-align: center; color: var(--subtext); font-size: 12px; padding: 10px 0; }
 
@@ -1371,18 +1373,24 @@ async function openDm(partnerPk) {
   await loadMessages();
 }
 
-async function promptSetContactName() {
-  const pk = S.activeConv?.type === 'dm' ? S.activeConv.id : null;
+async function promptSetContactName(pk) {
+  // Called from DM header button (no pk arg) or by clicking a sender name in a group chat (pk arg).
+  if (!pk) pk = S.activeConv?.type === 'dm' ? S.activeConv.id : null;
   if (!pk) return;
   const current = S.nicknames[pk] || '';
-  const name = prompt(`Set a display name for this contact:\n${shortPk(pk)}`, current);
+  const name = prompt(`Save contact name for:\n${shortPk(pk)}`, current);
   if (name === null) return; // cancelled
-  await api('POST', '/api/contacts/set', { public_key_hex: pk, display_name: name.trim() });
-  S.nicknames[pk] = name.trim();
-  // Refresh header
-  const updated = nameFor(pk);
-  el('ch-name').textContent = updated;
-  el('ch-avatar').textContent = updated[0]?.toUpperCase() || '?';
+  const trimmed = name.trim();
+  await api('POST', '/api/contacts/set', { public_key_hex: pk, display_name: trimmed });
+  S.nicknames[pk] = trimmed;
+  // Refresh DM header if this pk is the active DM
+  if (S.activeConv?.type === 'dm' && S.activeConv.id === pk) {
+    const updated = nameFor(pk);
+    el('ch-name').textContent = updated;
+    el('ch-avatar').textContent = updated[0]?.toUpperCase() || '?';
+  }
+  // Re-render so the sender name updates immediately in group chat too
+  await loadMessages();
   renderConvList();
 }
 
@@ -1449,9 +1457,10 @@ function renderRoomMessages(msgs) {
   }
   area.innerHTML = msgs.map(m => {
     const mine = m.from_pk === S.activeWallet;
+    const senderName = nameFor(m.from_pk);
     return `<div class="msg-row ${mine?'mine':'theirs'}">
       <div class="msg-bubble">
-        ${!mine ? `<div class="msg-sender">${esc(nameFor(m.from_pk))}</div>` : ''}
+        ${!mine ? `<div class="msg-sender clickable" onclick="promptSetContactName('${m.from_pk}')" title="Save as contact">${esc(senderName)}</div>` : ''}
         ${esc(m.content)}
         <div class="msg-time">${timeFmt(m.timestamp)}</div>
       </div>
