@@ -2058,7 +2058,8 @@ async function openPublicRoom(roomId, displayName) {
 
 // ── Onboarding ─────────────────────────────────────────────────────────────────
 function showOnboardingIfNeeded() {
-  if (!localStorage.getItem('tari_welcomed')) {
+  // Show whenever there are no wallets — works correctly after state resets too.
+  if (!S.wallets.length) {
     showModal('onboarding-modal');
   }
 }
@@ -2073,7 +2074,6 @@ function chooseSimple() {
 }
 
 function chooseAdvanced() {
-  localStorage.setItem('tari_welcomed', '1');
   hideModal('onboarding-modal');
   // Save mode to server
   fetch('/api/settings', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({setup_mode:'Advanced'})});
@@ -2081,7 +2081,6 @@ function chooseAdvanced() {
 }
 
 async function finishOnboarding() {
-  localStorage.setItem('tari_welcomed', '1');
   // Save mode to server
   fetch('/api/settings', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({setup_mode:'Simple'})});
   hideModal('onboarding-modal');
@@ -2102,7 +2101,6 @@ async function finishOnboarding() {
 }
 
 function dismissOnboarding() {
-  localStorage.setItem('tari_welcomed', '1');
   hideModal('onboarding-modal');
 }
 
