@@ -25,6 +25,11 @@ messaging-state*.json
 # Claude Code project settings (internal tooling)
 .claude/
 
+# Internal dev notes — not for public repo
+PLAN.md
+PROGRESS.md
+DEMO.md
+
 # Unnamed scratch assets
 Untitled.png
 Untitled*.png

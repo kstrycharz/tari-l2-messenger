@@ -264,6 +264,26 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .pub-own-desc { font-size:11px;color:var(--subtext);line-height:1.5;margin-bottom:9px; }
 .pub-room-info-btn { background:none;border:none;color:var(--subtext);cursor:pointer;font-size:13px;padding:1px 5px;border-radius:4px;margin-left:2px;transition:color 0.15s;line-height:1; }
 .pub-room-info-btn:hover { color:var(--accent); }
+
+/* ── Contacts List ── */
+#contacts-list { flex:1; overflow-y:auto; display:none; flex-direction:column; }
+#contacts-list.visible { display:flex; }
+.contact-item { display:flex; align-items:center; gap:10px; padding:10px 14px; border-bottom:1px solid var(--divider); transition:background 0.1s; }
+.contact-item:hover { background:var(--surface2); }
+.contact-av { width:36px; height:36px; border-radius:50%; background:var(--accent-dim); display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:700; color:var(--text); flex-shrink:0; }
+.contact-info { flex:1; min-width:0; }
+.contact-name { font-size:13px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.contact-pk { font-size:10px; color:var(--subtext); font-family:monospace; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; cursor:pointer; transition:color 0.15s; }
+.contact-pk:hover { color:var(--accent); }
+.contact-btns { display:flex; gap:4px; flex-shrink:0; }
+.contact-btn { width:28px; height:28px; border-radius:6px; border:1px solid var(--divider); background:transparent; color:var(--subtext); cursor:pointer; font-size:12px; display:flex; align-items:center; justify-content:center; transition:all 0.15s; }
+.contact-btn:hover { background:var(--surface2); color:var(--text); border-color:var(--accent); }
+.contact-btn.del:hover { border-color:var(--error); color:var(--error); }
+.contact-edit-row { padding:0 14px 10px; border-bottom:1px solid var(--divider); display:none; gap:6px; align-items:center; background:rgba(82,136,193,0.04); }
+.contact-edit-row.open { display:flex; }
+.contact-edit-input { flex:1; background:var(--surface2); border:1px solid var(--accent); border-radius:6px; padding:7px 10px; color:var(--text); font-size:13px; outline:none; font-family:inherit; }
+.contact-edit-save { padding:7px 14px; border-radius:6px; border:none; background:var(--accent); color:white; cursor:pointer; font-size:12px; white-space:nowrap; transition:background 0.15s; }
+.contact-edit-save:hover { background:#3d6fa8; }
 </style>
 </head>
 <body>
@@ -296,7 +316,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 
     <div id="snav">
       <button class="snav-tab active" id="snav-chats" onclick="switchSidebarTab('chats')">💬 Chats</button>
-      <button class="snav-tab" id="snav-public" onclick="switchSidebarTab('public')">🌐 Public Chats</button>
+      <button class="snav-tab" id="snav-public" onclick="switchSidebarTab('public')">🌐 Public</button>
+      <button class="snav-tab" id="snav-contacts" onclick="switchSidebarTab('contacts')">👤 Contacts</button>
     </div>
 
     <div id="conv-list">
@@ -305,6 +326,9 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 
     <!-- Public Chat List -->
     <div id="public-list"></div>
+
+    <!-- Contacts List -->
+    <div id="contacts-list"></div>
 
     <!-- Wallet HUD -->
     <div id="wallet-hud">
@@ -349,7 +373,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
         <div class="ch-sub" id="ch-sub"></div>
       </div>
       <div id="header-tools">
-        <button id="btn-set-name" class="btn-secondary" onclick="promptSetContactName()" style="display:none;font-size:12px;padding:5px 10px">✏️ Set Name</button>
+        <button id="btn-set-name" class="icon-btn" onclick="promptSetContactName()" style="display:none" title="Save as contact">👤</button>
         <a class="learn-btn" href="/instructions" target="_blank">📖 Learn More</a>
       </div>
     </div>
@@ -728,6 +752,9 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
       </div>
       <div style="background:rgba(255,152,0,0.08);border:1px solid rgba(255,152,0,0.2);border-radius:8px;padding:10px 12px;margin-bottom:12px;font-size:11px;color:var(--subtext);line-height:1.6">
         <strong style="color:#ffb74d">⚠ Privacy heads-up:</strong> In the default contract, <strong style="color:var(--text)">all messages are public on-chain</strong> — content, sender/recipient keys, and timestamps are visible to anyone with the contract address. DMs can be encrypted (E2EE toggle in wallet panel), but group rooms like this one are always plaintext. <span style="color:var(--accent);cursor:pointer;text-decoration:underline" onclick="switchObStep(1);showModal('pubinfo-modal')">Learn more</span>
+      </div>
+      <div style="background:rgba(82,136,193,0.06);border:1px solid rgba(82,136,193,0.2);border-radius:8px;padding:10px 12px;margin-bottom:12px;font-size:11px;color:var(--subtext);line-height:1.6">
+        <strong style="color:var(--accent)">ℹ DMs also use the shared contract</strong> — if you don't configure your own, direct messages go through the same community contract as the group chat. To get a fully private DM channel, use <strong style="color:var(--text)">Advanced Setup</strong> to deploy your own contract instead.
       </div>
       <p style="font-size:13px;color:var(--subtext);margin-bottom:14px;line-height:1.5">Next: create a wallet. We'll generate a fresh keypair and fund it from the testnet faucet (~30 seconds).</p>
       <div style="display:flex;gap:8px;justify-content:flex-end">
@@ -1144,6 +1171,7 @@ async function reload() {
     S.wallets = walletsData.wallets || [];
     S.rooms = roomsData.rooms || [];
     S.nicknames = contactsData.contacts || {};
+    updateContactsBadge();
     // S.encryptionEnabled already set above
 
     const prevWallet = S.activeWallet;
@@ -1167,6 +1195,7 @@ async function reload() {
     renderConvList();
     if (S.activeConv) await loadMessages();
     if (S.sidebarTab === 'public') renderPublicList();
+    if (S.sidebarTab === 'contacts') renderContactsList();
   } catch(e) {
     console.warn('reload error:', e);
   }
@@ -1373,25 +1402,113 @@ async function openDm(partnerPk) {
   await loadMessages();
 }
 
+// Open the Contacts tab, pre-populating a new entry if needed, and open its edit row.
 async function promptSetContactName(pk) {
-  // Called from DM header button (no pk arg) or by clicking a sender name in a group chat (pk arg).
   if (!pk) pk = S.activeConv?.type === 'dm' ? S.activeConv.id : null;
   if (!pk) return;
-  const current = S.nicknames[pk] || '';
-  const name = prompt(`Save contact name for:\n${shortPk(pk)}`, current);
-  if (name === null) return; // cancelled
-  const trimmed = name.trim();
+  // If this is a new contact, seed a blank entry so the row renders
+  if (!S.nicknames[pk]) S.nicknames[pk] = '';
+  switchSidebarTab('contacts');
+  await new Promise(r => setTimeout(r, 30)); // let DOM render
+  startEditContact(pk);
+  el(`ci-${pk}`)?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function renderContactsList() {
+  const list = el('contacts-list');
+  if (!list) return;
+  const entries = Object.entries(S.nicknames).sort((a,b) => (a[1]||a[0]).localeCompare(b[1]||b[0]));
+  if (entries.length === 0) {
+    list.innerHTML = `<div class="empty-list">No contacts yet.<br>Tap a sender's name in any chat,<br>or the 👤 button in a DM header.</div>`;
+    return;
+  }
+  let html = '';
+  for (const [pk, name] of entries) {
+    const display = name || shortPk(pk);
+    const initial = display[0]?.toUpperCase() || '?';
+    const safeId = pk.replace(/[^a-zA-Z0-9]/g,'_');
+    html += `<div class="contact-item" id="ci-${safeId}">
+      <div class="contact-av">${esc(initial)}</div>
+      <div class="contact-info">
+        <div class="contact-name">${esc(display)}</div>
+        <div class="contact-pk" onclick="navigator.clipboard?.writeText('${pk}')" title="Click to copy full key">${shortPk(pk)}</div>
+      </div>
+      <div class="contact-btns">
+        <button class="contact-btn" onclick="openDm('${pk}');switchSidebarTab('chats')" title="Open DM">💬</button>
+        <button class="contact-btn" onclick="startEditContact('${safeId}')" title="Edit name">✏</button>
+        <button class="contact-btn del" onclick="deleteContact('${pk}')" title="Remove contact">✕</button>
+      </div>
+    </div>
+    <div class="contact-edit-row" id="cer-${safeId}">
+      <input class="contact-edit-input" id="cei-${safeId}" type="text" value="${esc(name)}" placeholder="Enter contact name…"
+        onkeydown="if(event.key==='Enter')saveEditContact('${pk}','${safeId}');if(event.key==='Escape')cancelEditContact('${safeId}')">
+      <button class="contact-edit-save" onclick="saveEditContact('${pk}','${safeId}')">Save</button>
+    </div>`;
+  }
+  list.innerHTML = html;
+  updateContactsBadge();
+}
+
+function startEditContact(safeId) {
+  document.querySelectorAll('.contact-edit-row.open').forEach(r => r.classList.remove('open'));
+  const row = el(`cer-${safeId}`);
+  if (!row) return;
+  row.classList.add('open');
+  const inp = el(`cei-${safeId}`);
+  inp?.focus();
+  inp?.select();
+}
+
+function cancelEditContact(safeId) {
+  el(`cer-${safeId}`)?.classList.remove('open');
+  // If this was a blank placeholder entry, remove it
+  const pk = pkFromSafeId(safeId);
+  if (pk && S.nicknames[pk] === '') {
+    delete S.nicknames[pk];
+    renderContactsList();
+  }
+}
+
+async function saveEditContact(pk, safeId) {
+  const inp = el(`cei-${safeId}`);
+  if (!inp) return;
+  const trimmed = inp.value.trim();
   await api('POST', '/api/contacts/set', { public_key_hex: pk, display_name: trimmed });
-  S.nicknames[pk] = trimmed;
-  // Refresh DM header if this pk is the active DM
+  if (trimmed) {
+    S.nicknames[pk] = trimmed;
+  } else {
+    delete S.nicknames[pk];
+  }
+  renderContactsList();
+  renderConvList();
   if (S.activeConv?.type === 'dm' && S.activeConv.id === pk) {
     const updated = nameFor(pk);
     el('ch-name').textContent = updated;
     el('ch-avatar').textContent = updated[0]?.toUpperCase() || '?';
   }
-  // Re-render so the sender name updates immediately in group chat too
-  await loadMessages();
+  if (S.activeConv) await loadMessages();
+}
+
+async function deleteContact(pk) {
+  await api('POST', '/api/contacts/set', { public_key_hex: pk, display_name: '' });
+  delete S.nicknames[pk];
+  renderContactsList();
   renderConvList();
+  if (S.activeConv?.type === 'dm' && S.activeConv.id === pk) {
+    el('ch-name').textContent = nameFor(pk);
+  }
+}
+
+// Map a safe DOM id back to a pk — iterate nicknames to find the match
+function pkFromSafeId(safeId) {
+  return Object.keys(S.nicknames).find(pk => pk.replace(/[^a-zA-Z0-9]/g,'_') === safeId) || null;
+}
+
+function updateContactsBadge() {
+  const btn = el('snav-contacts');
+  if (!btn) return;
+  const count = Object.keys(S.nicknames).length;
+  btn.textContent = count > 0 ? `👤 Contacts (${count})` : '👤 Contacts';
 }
 
 async function openRoom(roomId) {
@@ -1605,7 +1722,11 @@ function doOpenDm() {
   const pk = el('dm-recipient').value.trim();
   const nick = el('dm-nickname').value.trim();
   if (!pk) { alert('Enter recipient public key'); return; }
-  if (nick) S.nicknames[pk] = nick;
+  if (nick) {
+    S.nicknames[pk] = nick;
+    api('POST', '/api/contacts/set', { public_key_hex: pk, display_name: nick });
+    updateContactsBadge();
+  }
   if (!S.openDms[pk]) S.openDms[pk] = [];
   hideModal('dm-modal');
   el('dm-recipient').value = ''; el('dm-nickname').value = '';
@@ -1987,24 +2108,23 @@ function openTemplateModal() {
 // ── Sidebar Tab Switching ──────────────────────────────────────────────────────
 function switchSidebarTab(tab) {
   S.sidebarTab = tab;
-  ['chats','public'].forEach(t => {
+  ['chats','public','contacts'].forEach(t => {
     el(`snav-${t}`)?.classList.toggle('active', t === tab);
   });
   const convList = el('conv-list');
   const pubList = el('public-list');
-  if (tab === 'chats') {
-    convList.style.display = '';
-    pubList.classList.remove('visible');
-  } else {
-    convList.style.display = 'none';
-    pubList.classList.add('visible');
+  const ctsList = el('contacts-list');
+  convList.style.display = tab === 'chats' ? '' : 'none';
+  pubList.classList.toggle('visible', tab === 'public');
+  ctsList.classList.toggle('visible', tab === 'contacts');
+  if (tab === 'public') {
     renderPublicList();
-    // Show info modal the first time user opens the Public tab
     if (!localStorage.getItem('tari_public_seen')) {
       localStorage.setItem('tari_public_seen', '1');
       setTimeout(() => showModal('pubinfo-modal'), 300);
     }
   }
+  if (tab === 'contacts') renderContactsList();
 }
 
 // ── Public Chat ────────────────────────────────────────────────────────────────
@@ -2110,6 +2230,16 @@ async function finishOnboarding() {
   // Save mode to server
   fetch('/api/settings', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({setup_mode:'Simple'})});
   hideModal('onboarding-modal');
+  // Auto-configure the public contract as this user's component so Quick Start enables
+  // both group chat AND direct messages without deploying a separate contract
+  if (S.publicConfig?.configured) {
+    try {
+      await api('POST', '/api/component/join', {
+        component_address: S.publicConfig.component_address,
+        template_address: S.publicConfig.template_address
+      });
+    } catch(e) { console.warn('Quick Start component join failed:', e); }
+  }
   // Auto-join the public rooms locally
   const rooms = S.publicConfig?.rooms || [
     {room_id:'tari-messenger-test-chat', display_name:'Tari Messenger Test Chat'}
